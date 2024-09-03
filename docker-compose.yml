@@ -1,0 +1,30 @@
+version: '3'
+services:
+  backend:
+    container_name: IoT-backend
+    image: iot-backend-container:latest
+    build:
+      context: .
+      dockerfile: ./docker/backend/Dockerfile
+    restart: unless-stopped
+    env_file: ./backend/.env
+    ports:
+      - 8000:8000
+    volumes:
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/backend:/app
+  frontend:
+    container_name: IoT-frontend
+    image: iot-frontend-container:latest
+    build:
+      context: .
+      dockerfile: ./docker/frontend/Dockerfile
+    restart: unless-stopped
+    env_file: ./frontend/.env
+    ports:
+      - 3000:3000
+    volumes:
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/frontend:/app
+      - ignore:/app/node_modules
+
+volumes:
+  ignore:
