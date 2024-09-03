@@ -39,3 +39,4 @@ next-env.d.ts
 
 #datas
 /data
+db.sqlite3
