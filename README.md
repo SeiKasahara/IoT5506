@@ -13,7 +13,7 @@ To start the project, follow these steps:
 2. **Start Docker Containers**:
    If the `Dockerfile` has not been updated, you can start the containers using the script:
    ```sh
-   ./start-docker.sh
+   ./docker-start.sh
    ```
 
 ## Prerequisites
