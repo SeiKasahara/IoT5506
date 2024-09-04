@@ -1,0 +1,34 @@
+.dividecontainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0px;
+  gap: 23px;
+}
+
+.divideline {
+  flex-grow: 1;
+  min-height: 2px;
+  width: 333.5px;
+  height: 2px;
+  background-color: rgba(102, 102, 102, 0.25);
+  margin: 0 10px;
+}
+
+.divide {
+  /* OR */
+
+  font-family: 'BROmny-regular', 'sans-serif';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 31px;
+  display: flex;
+  align-items: center;
+
+  color: #666666;
+
+  /* Inside auto layout */
+  flex: none;
+  flex-grow: 0;
+}

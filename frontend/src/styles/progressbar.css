@@ -1,0 +1,65 @@
+/* ProgressBar.css */
+
+.progress-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0px;
+}
+
+.circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #666666;
+  font-family: 'BROmny-Medium', 'sans-serif';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 16px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+
+  color: #ffffff;
+  justify-content: center;
+}
+
+.line {
+  flex-grow: 1;
+  width: 232px;
+  height: 1px;
+
+  background: #333333;
+  opacity: 0.35;
+  min-height: 1px;
+}
+
+.label {
+  font-family: 'BROmny-Light', 'sans-serif';
+  margin-top: 8px;
+  color: black;
+  opacity: 0.5;
+  font-size: 16px;
+  line-height: 21px;
+}
+
+.active .circle {
+  background-color: #3e51ff;
+}
+
+.active .label {
+  opacity: 1;
+}
+
+.active .line {
+  background-color: #3e51ff;
+}

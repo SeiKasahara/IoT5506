@@ -1,7 +1,6 @@
 import '../styles/signup.css';
 import { CSSTransition } from 'react-transition-group';
-import React, { ChangeEvent, useEffect, useState } from 'react';
-import { Button } from '../components/ui/button';
+import React, { useEffect, useState } from 'react';
 import SignupTitle from '../components/ui/signups/signuptitle';
 
 import { PageOne } from '../components/ui/signups/progressOne';
@@ -42,7 +41,6 @@ const Signup = () => {
       const data = {
         email: email,
         username: firstName,
-        birthday: formattedBirthday,
         password: password, //encryptPassword
       };
 
@@ -54,8 +52,8 @@ const Signup = () => {
         } else if (response.status === 201) {
           setEmail('');
           setFirstName('');
-          setBirthday('');
           setPassword('');
+          setRepeatPassword('');
           console.log('Successfully created a new user');
           window.location.href = '/main';
         } else {

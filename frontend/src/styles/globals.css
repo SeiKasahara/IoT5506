@@ -1,0 +1,75 @@
+@font-face {
+  font-family: 'BROmny-Regular';
+  src: url('/fonts/BROmny-Regular-BF65557eb88143f.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BROmny-Black';
+  src: url('/fonts/BROmny-Black-BF65557eb8858b2.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BROmny-Bold';
+  src: url('/fonts/BROmny-Bold-BF65557eb88a83f.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BROmny-Light';
+  src: url('/fonts/BROmny-Light-BF65557eb87f5b9.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BROmny-Medium';
+  src: url('/fonts/BROmny-Medium-BF65557eb8745de.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BROmny-SemiBold';
+  src: url('/fonts/BROmny-SemiBold-BF65557eb890e9a.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BROmny-Thin';
+  src: url('/fonts/BROmny-Thin-BF65557eb87d202.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --borderWidth: 1px;
+    --radius: 40px;
+  }
+  body {
+    @apply font-bromny bg-background text-foreground;
+  }
+  * {
+    @apply border-border;
+  }
+}
