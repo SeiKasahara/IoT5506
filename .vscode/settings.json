@@ -1,0 +1,19 @@
+{
+    "python.analysis.extraPaths": [
+        "./backend"
+    ],
+    "eslint.validate": [
+        "javascript",
+    ],
+    "shellcheck.ignorePatterns": {
+        "**/.env*": true
+    },
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+}
