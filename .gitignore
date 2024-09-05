@@ -39,4 +39,7 @@ next-env.d.ts
 
 #datas
 /data
-/backend/*.sqlite3
+/backend/db.sqlite3
+/backend/backend/__pycache__/
+/backend/app/__pycache__/
+
