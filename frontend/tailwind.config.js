@@ -2,7 +2,6 @@
 
 const config = {
   content: ['./src/**/*.{html,js,jsx,ts,tsx}'],
-  purge: ['./src/**/*.{js,jsx,ts,tsx}', './src/style/*.css'],
   safelist: [
     {
       // Some components use str template to determine colour, not rendered if 'jit'

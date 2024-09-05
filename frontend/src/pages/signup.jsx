@@ -1,4 +1,5 @@
 import '../styles/signup.css';
+
 import { CSSTransition } from 'react-transition-group';
 import React, { useEffect, useState } from 'react';
 import SignupTitle from '../components/ui/signups/signuptitle';
@@ -8,6 +9,9 @@ import { PageTwo } from '../components/ui/signups/progressTwo';
 
 import api from '../libs/api';
 //import encryptPassword from '../libs/encrypt';
+
+const DASHBOARD_URL = '/dashboard';
+
 
 const Signup = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -54,8 +58,11 @@ const Signup = () => {
           setFirstName('');
           setPassword('');
           setRepeatPassword('');
-          console.log('Successfully created a new user');
-          window.location.href = '/main';
+          const token = response.data.access_token;
+          localStorage.setItem("token", token);
+
+          console.log("Successfully created a new user");
+          window.location.href = DASHBOARD_URL;
         } else {
           console.log('There is an issue when sending a message');
         }
@@ -63,7 +70,6 @@ const Signup = () => {
         console.error('Error occurs when ', error);
       }
 
-      //window.location.reload();
     };
     if (submit) {
       onFinish();

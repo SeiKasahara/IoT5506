@@ -4,18 +4,16 @@ import React, { useState } from 'react';
 
 import { cn } from '../../libs/utils';
 
-const inputBase = 'rounded-input placeholder-volt-text-input-light-mode';
-
 const inputVariants = cva(
-  'block w-full px-4 py-2 transition-colors focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50',
+  'rounded-input placeholder-volt-text-input-light-mode block px-4 py-2 transition-colors focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: `${inputBase} border-1.5 border-volt-text-main`,
-        error: `${inputBase} border border-rose-600`,
+        default: 'border-1.5 border-volt-text-main',
+        error: 'border border-rose-600',
       },
       inputSize: {
-        default: 'w-full h-[56px]',
+        default: 'w-[750px] h-[56px]',
       },
       padding: {
         sm: 'px-2 py-1',
@@ -30,6 +28,7 @@ const inputVariants = cva(
     },
   },
 );
+
 
 const Input = React.forwardRef(function Input(
   {

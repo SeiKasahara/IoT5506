@@ -1,6 +1,6 @@
 import api from '../libs/api';
 
-export const checkUnique = async () => {
+export const checkUnique = async (input, type) => {
   try {
     const response = await api.get(`/check-unique?${type}=${input}`);
     // axios automatically parses the response as JSON if the content type is application/json

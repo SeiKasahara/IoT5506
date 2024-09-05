@@ -11,6 +11,7 @@ export const PageTwo = ({
   currentStep,
   setCurrentStep,
   setFirstName,
+  setSubmit
 }) => {
   const [firstNameVariant, setFirstNameVariant] = useState('inactive');
   const [inputState, setInputState] = useState('default');
@@ -25,26 +26,8 @@ export const PageTwo = ({
     setFirstNameVariant(value ? 'default' : 'inactive');
   };
 
-  const handleBirthdayChange = (event) => {
-    const value = event.target.value;
-    setBirthday(value);
-    handleInputChange(event);
-    setBirthdayVariant(value ? 'default' : 'inactive');
-    if (isValidDate(value).isValid) {
-      // 使用前面定义的isValidDate函数
-      setInputState('default');
-      setErrorMessage('');
-    } else {
-      setInputState('error');
-      setErrorMessage(isValidDate(value).errorMessage);
-    }
-  };
-
   const usernameInputVariant =
     userInputState === 'default' ? 'default' : 'error';
-
-  const buttonVariant =
-    firstNameVariant === 'default';
 
   const handleSubmit = async () => {
     try {
@@ -53,7 +36,7 @@ export const PageTwo = ({
         setUserInputState('error');
         setUsernameErrorMessage(message);
       } else {
-        setCurrentStep(currentStep + 1);
+        setSubmit(true);
       }
     } catch (error) {
       console.error('An error occurred:', error);
@@ -77,9 +60,9 @@ export const PageTwo = ({
         )}
       </div>
       <Button
-        variant={buttonVariant}
+        variant={firstNameVariant}
         onClick={handleSubmit}
-        disabled={buttonVariant === 'inactive'}
+        disabled={firstNameVariant === 'inactive'}
       >
         Next
       </Button>

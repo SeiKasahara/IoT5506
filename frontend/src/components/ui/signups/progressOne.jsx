@@ -2,11 +2,19 @@ import React, { ChangeEvent, useState } from 'react';
 import ProgressBar from './progressbar';
 import { Input } from '../input';
 import { Button } from '../button';
-import { emailRegex } from '../../../libs/emailRegex';
+import { emailRegex } from '../../../libs/regex';
+import { pwRegex } from '../../../libs/regex';
 import { checkUnique } from '../../../libs/checkUnique';
 
 function isValidEmail(email) {
   return emailRegex.test(email);
+}
+
+function passwordValidation(password, repeatPassword) {
+  if (repeatPassword != password) {
+    return false;
+  }
+  return true;
 }
 
 export const PageOne = ({
@@ -22,15 +30,43 @@ export const PageOne = ({
 }) => {
   const [buttonVariant, setButtonVariant] = useState('inactive');
   const [errorMessage, setErrorMessage] = useState('');
+  const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
   const [inputState, setInputState] = useState('default');
   const [passwordVariant, setPasswordVariant] = useState('inactive');
   const [repeatPasswordVariant, setRepeatPasswordVariant] =
     useState('inactive');
+
+
+  function inputCheck(password, hook) {
+    if (password.length < 8) {
+      setPasswordErrorMessage(
+        "This password is too short. It must contain at least 8 characters.",
+      );
+      hook("inactive");
+      return false;
+    } else if (pwRegex.test(password)) {
+      setPasswordErrorMessage("This password is entirely numeric.");
+      hook("inactive");
+      return false;
+    } else {
+      setPasswordErrorMessage('');
+      hook("default");
+      return true;
+    }
+  }
+
   const handlePasswordChange = (event) => {
     const value = event.target.value;
     setPassword(value);
     handleInputChange(event);
     setPasswordVariant(event.target.value ? 'default' : 'inactive');
+    if (!passwordValidation(repeatPassword, value)) {
+      setPasswordErrorMessage("Passwords do not match");
+      setPasswordVariant("inactive");
+    } else {
+      setPasswordErrorMessage('');
+      setPasswordVariant("default");
+    }
   };
 
   const handleRepeatPasswordChange = (event) => {
@@ -38,13 +74,15 @@ export const PageOne = ({
     setRepeatPassword(value);
     handleInputChange(event);
     setRepeatPasswordVariant(event.target.value ? 'default' : 'inactive');
-    if (passwordValidation(password, value)) {
-      setInputState('default');
-      setErrorMessage('');
+    if (!passwordValidation(password, value)) {
+      setPasswordErrorMessage("Passwords do not match");
+      setRepeatPasswordVariant("inactive");
+    } else if (!inputCheck(password, setPasswordVariant)) {
+      inputCheck(password, setPasswordVariant);
     } else {
-      setInputState('error');
-      setErrorMessage('Passwords do not match');
-    }
+      setPasswordErrorMessage('');
+      setRepeatPasswordVariant("default");
+    } 
   };
 
   const handleEmailChange = (event) => {
@@ -61,18 +99,13 @@ export const PageOne = ({
     }
   };
 
-  const passwordInputVariant = inputState === 'default' ? 'default' : 'error';
-  /*
-  const buttonVariant =
+  const passwordInputVariant = 'default' ? 'default' : 'error';
+  const emailInputState =  'default' ? 'default' : 'error';
+  const buttonInputVariant =
     passwordVariant === 'default' &&
     repeatPasswordVariant === 'default' &&
-    passwordInputVariant === 'default'
-      ? 'default'
-      : 'inactive';*/
-
-  const emailInputState = inputState === 'default' ? 'default' : 'error';
-  const buttonInputVariant =
-    buttonVariant === 'default' && emailInputState === 'default'
+    passwordInputVariant === 'default' && 
+    emailInputState === 'default'
       ? 'default'
       : 'inactive';
 
@@ -122,7 +155,7 @@ export const PageOne = ({
           onChange={handleRepeatPasswordChange}
           placeholder='Enter your password once again'
         ></Input>
-        {errorMessage && <div style={{ color: '#f06292' }}>{errorMessage}</div>}
+        {passwordErrorMessage && <div style={{ color: '#f06292' }}>{passwordErrorMessage}</div>}
       </div>
       <Button
         variant={buttonInputVariant}
