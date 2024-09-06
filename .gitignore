@@ -33,13 +33,9 @@ yarn-error.log*
 # vercel
 .vercel
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
 #datas
 /data
 /backend/db.sqlite3
 /backend/backend/__pycache__/
 /backend/app/__pycache__/
-
+/backend/app/migrations/__pycache__/
