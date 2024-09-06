@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', 'username', 'password']
+        fields = ['email', 'username', 'password', 'devicename']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -19,12 +19,13 @@ class UserSerializer(serializers.ModelSerializer):
             'access': str(refresh.access_token),
         }
 
-    def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError('Username already exists')
+    def validate_devicename(self, value):
+        if User.objects.filter(devicename=value).exists():
+            raise serializers.ValidationError('Devicename already exists')
         return value
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError('Email already exists')
         return value
+    

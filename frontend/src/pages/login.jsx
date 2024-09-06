@@ -1,9 +1,15 @@
+import '../styles/login.css';
+
 import React, { useEffect, useState } from 'react';
 import api from '../libs/api';
+import LoginTitle from '../components/ui/login/logintitle';
+import { CSSTransition } from 'react-transition-group';
+
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [submit, setSubmit] = useState(false);
 
     const handleInputChange = (event) => {
         switch (event.target.name) {
@@ -16,9 +22,9 @@ const Login = () => {
           default:
             break;
         }
-      };
-      useEffect(() => {
-        const onFinish = async () => {
+    };
+    useEffect(() => {
+      const onFinish = async () => {
           const data = {
             email: email,
             password: password,
@@ -44,13 +50,18 @@ const Login = () => {
             console.error('Error occurs when ', error);
           }
     
-        };
-        if (submit) {
-          onFinish();
-          setSubmit(false);
-        }
-      }, [submit]);
-    return;
+      };
+      if (submit) {
+        onFinish();
+        setSubmit(false);
+      }
+    }, [submit]);
+    return (
+      <div className='container'>
+      <LoginTitle />
+
+      </div>
+    );
 };
 
 export default Login;

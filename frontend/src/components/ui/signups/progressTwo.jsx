@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { useState } from 'react';
 import ProgressBar from './progressbar';
 import { Input } from '../input';
 import { Button } from '../button';
@@ -9,15 +9,16 @@ export const PageTwo = ({
   firstName,
   handleInputChange,
   currentStep,
-  setCurrentStep,
+  deviceName,
+  setDeviceName,
   setFirstName,
   setSubmit
 }) => {
   const [firstNameVariant, setFirstNameVariant] = useState('inactive');
-  const [inputState, setInputState] = useState('default');
+  const [deviceNameVariant, setDeviceNameVariant] = useState('inactive');
   const [userInputState, setUserInputState] = useState('default');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [usernameErrorMessage, setUsernameErrorMessage] = useState('');
+  const [deviceInputState, setDeviceInputState] = useState('default');
+  const [devicenameErrorMessage, setDevicenameErrorMessage] = useState('');
 
   const handleFirstNameChange = (event) => {
     const value = event.target.value;
@@ -26,15 +27,29 @@ export const PageTwo = ({
     setFirstNameVariant(value ? 'default' : 'inactive');
   };
 
+  const handleDeviceNameChange = (event) => {
+    const value = event.target.value;
+    setDeviceName(value);
+    handleInputChange(event);
+    setDeviceNameVariant(value ? 'default' : 'inactive');
+  };
+
   const usernameInputVariant =
     userInputState === 'default' ? 'default' : 'error';
 
+  const deviceNameInputVariant = 
+    deviceInputState === 'default' ? 'default' : 'error';
+
+  const buttonState = 
+    firstNameVariant === 'default' &&
+    deviceNameVariant === 'default' ? 'default' : 'inactive';
+
   const handleSubmit = async () => {
     try {
-      const message = await checkUnique(firstName, 'username');
+      const message = await checkUnique(deviceName, 'devicename');
       if (message) {
-        setUserInputState('error');
-        setUsernameErrorMessage(message);
+        setDeviceInputState('error');
+        setDevicenameErrorMessage(message);
       } else {
         setSubmit(true);
       }
@@ -47,7 +62,7 @@ export const PageTwo = ({
     <div className='middlecontainer'>
       <ProgressBar currentStep={currentStep} />
       <div className='inputcontainer'>
-        <p className='mention'>What’s your first name?</p>
+        <p className='mention'>What’s your name?</p>
         <Input
           variant={usernameInputVariant}
           type='string'
@@ -55,14 +70,24 @@ export const PageTwo = ({
           onChange={handleFirstNameChange}
           placeholder='Enter your first name'
         ></Input>
-        {usernameErrorMessage && (
-          <div style={{ color: '#f06292' }}>{usernameErrorMessage}</div>
+      </div>
+      <div className='inputcontainer'>
+        <p className='mention'>Bind your IoT device</p>
+        <Input
+          variant={deviceNameInputVariant}
+          type='string'
+          value={deviceName}
+          onChange={handleDeviceNameChange}
+          placeholder='Enter your device name'
+        ></Input>
+        {devicenameErrorMessage && (
+          <div style={{ color: '#f06292' }}>{devicenameErrorMessage}</div>
         )}
       </div>
       <Button
-        variant={firstNameVariant}
+        variant={buttonState}
         onClick={handleSubmit}
-        disabled={firstNameVariant === 'inactive'}
+        disabled={buttonState === 'inactive'}
       >
         Next
       </Button>

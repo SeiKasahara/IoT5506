@@ -10,7 +10,7 @@ import { PageTwo } from '../components/ui/signups/progressTwo';
 import api from '../libs/api';
 //import encryptPassword from '../libs/encrypt';
 
-const DASHBOARD_URL = '/dashboard';
+const DASHBOARD_URL = '/';
 
 
 const Signup = () => {
@@ -20,6 +20,7 @@ const Signup = () => {
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
   const [submit, setSubmit] = useState(false);
+  const [deviceName, setDeviceName] = useState('');
 
   const handleInputChange = (event) => {
     switch (event.target.name) {
@@ -35,6 +36,9 @@ const Signup = () => {
       case 'repeatPassword':
         setRepeatPassword(event.target.value);
         break;
+      case 'device':
+        setDeviceName(event.target.value);
+        break;
       default:
         break;
     }
@@ -46,11 +50,11 @@ const Signup = () => {
         email: email,
         username: firstName,
         password: password, //encryptPassword
+        devicename: deviceName,
       };
 
       try {
         const response = await api.post('/signup/', data);
-
         if (response.status === 200) {
           console.log('Successfully sent the message');
         } else if (response.status === 201) {
@@ -108,7 +112,8 @@ const Signup = () => {
           firstName={firstName}
           handleInputChange={handleInputChange}
           currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
+          deviceName={deviceName}
+          setDeviceName={setDeviceName}
           setFirstName={setFirstName}
           setSubmit={setSubmit}
         />
