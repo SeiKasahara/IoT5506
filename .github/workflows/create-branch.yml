@@ -2,22 +2,13 @@ name: Create Branch from Issue
 
 on:
   issues:
-    types: [opened]
+    types: [assigned]
 
 jobs:
-  create_branch:
+  create_issue_branch_job:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Create branch
-      run: |
-        ISSUE_NUMBER=${{ github.event.issue.number }}
-        ISSUE_TITLE=${{ github.event.issue.title }}
-        BRANCH_NAME="issue-${ISSUE_NUMBER}-${ISSUE_TITLE// /-}"
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git checkout -b $BRANCH_NAME
-        git push origin $BRANCH_NAME
+      - name: Create Issue Branch
+        uses: robvanderleek/create-issue-branch@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
