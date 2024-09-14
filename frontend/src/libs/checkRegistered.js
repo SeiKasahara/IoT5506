@@ -1,15 +1,15 @@
 import api from './api.js';
 
-export const checkUnique = async (input, type) => {
+export const checkRegistered = async (input, type) => {
   try {
     const response = await api.get(`/check-unique?${type}=${input}`);
     // axios automatically parses the response as JSON if the content type is application/json
     const data = response.data;
 
     if (data[`${type}_taken`]) {
-      return data[`${type}_error_message`];
+      return true;
     }
-    return '';
+    return false;
   } catch (error) {
     const axiosError = error;
     if (axiosError.response) {

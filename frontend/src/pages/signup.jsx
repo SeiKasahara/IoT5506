@@ -10,7 +10,7 @@ import { PageTwo } from '../components/ui/signups/progressTwo';
 import api from '../libs/api';
 //import encryptPassword from '../libs/encrypt';
 
-const DASHBOARD_URL = '/';
+const DASHBOARD_URL = '/dashboard';
 
 
 const Signup = () => {
@@ -62,7 +62,7 @@ const Signup = () => {
           setFirstName('');
           setPassword('');
           setRepeatPassword('');
-          const token = response.data.access_token;
+          const token = response.data.access;
           localStorage.setItem("token", token);
 
           console.log("Successfully created a new user");

@@ -28,10 +28,11 @@ class User(AbstractUser):
     )
 
 class SensorData(models.Model):
-    devicename = models.CharField(max_length=150, unique=True)
+    devicename = models.CharField(max_length=150)
     timestamp = models.DateTimeField(auto_now_add=True)
     sensor_humidity = models.FloatField()
     sensor_temperature = models.FloatField()
+    sensor_gas = models.FloatField()
 
     def __str__(self):
         return f"{self.timestamp}: {self.sensor_humidity}, {self.sensor_temperature}"

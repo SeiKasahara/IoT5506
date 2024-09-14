@@ -6,10 +6,9 @@ from rest_framework.views import APIView
 from .serializers import UserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 import json
-from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
-
 
 class UserRegistrationView(APIView):
     def post(self, request, *args, **kwargs):
@@ -24,19 +23,33 @@ class UserRegistrationView(APIView):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@csrf_exempt
 def login_view(request):
     if request.method == 'POST':
-        email = request.POST['email']
-        password = request.POST['password']
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            password = data.get('password')
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if email is None or password is None:
+            return JsonResponse({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
         user = authenticate(request, email=email, password=password)
         if user is not None:
             login(request, user)
-            return redirect('home')
+            refresh = RefreshToken.for_user(user)
+            return JsonResponse({
+                'message': 'Login successful',
+                'refresh': str(refresh),
+                'access': str(refresh.access_token)
+            }, status=status.HTTP_200_OK)
         else:
-            return HttpResponse('Invalid login credentials')
-    return render(request, 'login.html')
+            return JsonResponse({'error': 'Invalid login credentials'}, status=status.HTTP_400_BAD_REQUEST)
+    return JsonResponse({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
+@csrf_exempt
 def check_unique(request):
     try:
         email = request.GET.get('email')
@@ -72,8 +85,23 @@ def upload_image(request):
 @csrf_exempt
 def sensor_data(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        sensor_value = data.get('sensor_value')
-        SensorData.objects.create(sensor_value=sensor_value)
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'failed'}, status=400)
+        try:
+            data = json.loads(request.body)
+            devicename = data.get('devicename')
+            sensor_humidity = data.get('sensor_humidity')
+            sensor_temperature = data.get('sensor_temperature')
+            sensor_gas = data.get('sensor_gas')
+
+            if not all([devicename, sensor_humidity, sensor_temperature, sensor_gas]):
+                return JsonResponse({'status': 'failed', 'message': 'Missing fields'}, status=400)
+
+            SensorData.objects.create(
+                devicename=devicename,
+                sensor_humidity=sensor_humidity,
+                sensor_temperature=sensor_temperature,
+                sensor_gas=sensor_gas
+            )
+            return JsonResponse({'status': 'success'})
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'failed', 'message': 'Invalid JSON'}, status=400)
+    return JsonResponse({'status': 'failed', 'message': 'Invalid request method'}, status=400)

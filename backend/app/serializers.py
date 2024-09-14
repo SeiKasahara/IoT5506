@@ -11,13 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data['password'])
-        user = super().create(validated_data)
-        refresh = RefreshToken.for_user(user)
-        return {
-            'user': user,
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
+        return super().create(validated_data)
 
     def validate_devicename(self, value):
         if User.objects.filter(devicename=value).exists():

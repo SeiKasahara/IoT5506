@@ -39,7 +39,7 @@ class FruitVegetableDataset(Dataset):
             image = self.transform(image)
         
         return image, label
- 
+
 # Build model
 model = resnet50(pretrained=True)
 model.fc = nn.Linear(2048, num_classes)  # Set output layer by dataset

@@ -7,15 +7,20 @@ import './index.css';
 import Login from './pages/login.jsx';
 import Dashboard from './pages/dashboard.jsx';
 import './styles/globals.css';
+import { AuthProvider } from './libs/authProvider.jsx';
+import ProtectedRoute from './libs/protectedRoute.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Router>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   </StrictMode>,
 );
