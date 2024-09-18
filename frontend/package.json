@@ -27,7 +27,7 @@
     "glob": "^10.4.3",
     "is-inside-container": "^1.0.0",
     "lucide-react": "^0.395.0",
-    "next": "^14.2.4",
+    "next": "^14.2.10",
     "react-image-crop": "^11.0.5",
     "react-webcam": "^7.2.0",
     "rimraf": "^5.0.8",
