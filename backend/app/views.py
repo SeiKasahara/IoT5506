@@ -10,6 +10,23 @@ from django.utils.decorators import method_decorator
 import json
 from django.contrib.auth import authenticate, login
 
+
+##########################################################################################
+# djangorestframework-simplejwt version 5.3.1 and before 
+# is vulnerable to information disclosure. 
+# A user can access web application resources even after their account has been disabled
+# due to missing user validation checks via the for_user method.
+##########################################################################################
+
+def generate_token_for_user(user):
+    if not user.is_active:
+        raise ValueError("User account is disabled")
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+
 class UserRegistrationView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = UserSerializer(data=request.data)
