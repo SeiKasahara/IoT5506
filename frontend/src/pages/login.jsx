@@ -3,6 +3,7 @@ import '../styles/login.css';
 import React, { useEffect, useState } from 'react';
 import api from '../libs/api';
 import LoginTitle from '../components/ui/login/logintitle';
+import { useNavigate } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 import { LoginPage } from '../components/ui/login/loginPage';
 
@@ -26,6 +27,16 @@ const Login = () => {
             break;
         }
     };
+    const navigate = useNavigate();
+
+    useEffect(() => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        navigate('/dashboard');
+      }
+    }, [navigate]);
+  
+
     useEffect(() => {
       const onFinish = async () => {
           const data = {

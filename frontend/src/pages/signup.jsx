@@ -2,6 +2,7 @@ import '../styles/signup.css';
 
 import { CSSTransition } from 'react-transition-group';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SignupTitle from '../components/ui/signups/signuptitle';
 
 import { PageOne } from '../components/ui/signups/progressOne';
@@ -43,6 +44,15 @@ const Signup = () => {
         break;
     }
   };
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const onFinish = async () => {

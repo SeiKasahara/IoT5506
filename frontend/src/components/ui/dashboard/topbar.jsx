@@ -10,8 +10,8 @@ function TopBar() {
       </div>
 
       <div className="topbar-center">
-        <Button>Messages</Button>
-        <Button>Notifications</Button>
+        <Button size="topbarbtn">Messages</Button>
+        <Button size="topbarbtn">Notifications</Button>
       </div>
 
       <div className="topbar-right">

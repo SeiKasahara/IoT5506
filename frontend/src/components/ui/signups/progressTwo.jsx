@@ -41,8 +41,7 @@ export const PageTwo = ({
     deviceInputState === 'default' ? 'default' : 'error';
 
   const buttonState = 
-    firstNameVariant === 'default' &&
-    deviceNameVariant === 'default' ? 'default' : 'inactive';
+    firstNameVariant === 'default' ? 'default' : 'inactive';
 
   const handleSubmit = async () => {
     try {
@@ -72,13 +71,13 @@ export const PageTwo = ({
         ></Input>
       </div>
       <div className='inputcontainer'>
-        <p className='mention'>Bind your IoT device</p>
+        <p className='mention'>Bind your IoT device(If you don't have, you can skip this)</p>
         <Input
           variant={deviceNameInputVariant}
           type='string'
           value={deviceName}
           onChange={handleDeviceNameChange}
-          placeholder='Enter your device name'
+          placeholder='Enter your device token'
         ></Input>
         {devicenameErrorMessage && (
           <div style={{ color: '#f06292' }}>{devicenameErrorMessage}</div>

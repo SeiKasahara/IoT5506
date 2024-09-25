@@ -14,7 +14,6 @@
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    border-top-right-radius: 25px;
     border-bottom-right-radius: 25px; 
     transition: all 0.3s ease;
   }
@@ -44,23 +43,6 @@
     width: calc(100% - 240px);
     display: flex;
     flex-direction: column;
-  }
-
-  .topbar {
-    position: fixed;
-    left: 240px;
-    top: 0;
-    bottom: 0;
-    height: 60px;
-    width: calc(100%-240px);
-    background-color: #f4f4f4;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    border-bottom-left-radius: 25px;
-    z-index: 1000;
   }
 
   .content {

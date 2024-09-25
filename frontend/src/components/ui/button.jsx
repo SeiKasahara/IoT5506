@@ -22,6 +22,7 @@ const buttonVariants = cva(
       },
       size: {
         default: 'w-full h-[64px]',
+        topbarbtn: 'w-[160px] h-[64px]'
       },
     },
     defaultVariants: {

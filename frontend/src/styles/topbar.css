@@ -1,17 +1,22 @@
-/* 顶部导航栏样式 */
+
 .topbar {
-    height: 60px;
-    background-color: #f4f4f4;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    border-bottom-left-radius: 25px;
-    z-index: 1000;
-    width: 100%;
+  position: fixed;
+  left: 240px;
+  top: 0;
+  bottom: 0;
+  height: 80px;
+  width: 87%;
+  background-color: #f4f4f4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-bottom-left-radius: 25px;
+  z-index: 1000;
+  overflow: hidden;
   }
-  
+
   .topbar-left {
     font-size: 20px;
     font-weight: bold;
