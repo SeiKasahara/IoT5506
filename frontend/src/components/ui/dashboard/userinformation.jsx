@@ -1,8 +1,8 @@
-import React from 'react';
-import { useActionData } from 'react-router-dom';
+import React, { useState } from 'react';
 
 const UserInformation = () => {
-  useActionData
+  const [deviceName, setDeviceName] = useState('');
+  
   return (
     <div>
       <h1>User Information</h1>
