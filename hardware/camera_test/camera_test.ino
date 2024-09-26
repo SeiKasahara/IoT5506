@@ -5,7 +5,7 @@
 camera_config_t config;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   // Camera configuration
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -28,12 +28,12 @@ void setup() {
   config.pin_reset = -1;
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
-  config.frame_size = FRAMESIZE_UXGA;
+  config.frame_size = FRAMESIZE_SVGA;
   config.jpeg_quality = 10;
-  config.fb_count = 2;
+  config.fb_count = 1;
 
   if (esp_camera_init(&config) != ESP_OK) {
-    Serial.println("Camera init failed");
+    Serial.println("Camera init failed. Check pin configuration.");
     return;
   }
 
@@ -66,6 +66,8 @@ void loop() {
       Serial.println(httpResponseCode);
     }
     http.end();
+  } else {
+    Serial.println("WiFi not connected");
   }
 
   esp_camera_fb_return(fb);

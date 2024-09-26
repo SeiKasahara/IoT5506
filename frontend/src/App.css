@@ -1,11 +1,6 @@
 .App {
   text-align: center;
-  background-color: #f0f0f5;
-  background-image: url('/background.png');
-  background-size: cover; 
-  background-position: center; 
-  background-repeat: no-repeat;
-  color: #5259FF;
+  color: #000000;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -13,20 +8,21 @@
   align-items: center;
 }
 
-
 .App-header {
-  background-color: #ffffff;
-  padding: 20px;
+  background-color: #f4f4f4;
+  padding: 40px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
   font-size: 3rem;
-  margin: 0;
+  margin: 10px 0;
+  gap: 20px;
 }
 
 p {
   font-size: 1.5rem;
   margin: 10px 0;
+  gap: 20px;
 }

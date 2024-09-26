@@ -9,12 +9,12 @@ const Sidebar = ({ setActivePage }) => {
       </div>
       <ul>
         <li>
-          <Button onClick={() => setActivePage('userInformation')}>
-            User Information
+          <Button size='sidebarbtn' onClick={() => setActivePage('userInformation')}>
+            Home
           </Button>
         </li>
         <li>
-          <Button onClick={() => setActivePage('dashboard')}>
+          <Button size='sidebarbtn' onClick={() => setActivePage('dashboard')}>
             Dashboard
           </Button>
         </li>

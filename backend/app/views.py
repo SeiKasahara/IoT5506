@@ -163,4 +163,7 @@ def sensor_data(request):
             return JsonResponse({'status': 'success'})
         except json.JSONDecodeError:
             return JsonResponse({'status': 'failed', 'message': 'Invalid JSON'}, status=400)
+    elif request.method == 'GET':
+        data = SensorData.objects.all().values('timestamp', 'sensor_humidity', 'sensor_temperature', 'sensor_gas')
+        return JsonResponse(list(data), safe=False)
     return JsonResponse({'status': 'failed', 'message': 'Invalid request method'}, status=400)

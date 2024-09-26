@@ -22,7 +22,8 @@ const buttonVariants = cva(
       },
       size: {
         default: 'w-full h-[64px]',
-        topbarbtn: 'w-[160px] h-[64px]'
+        topbarbtn: 'w-[40px] h-[34px]',
+        sidebarbtn: 'w-full h-[40px]'
       },
     },
     defaultVariants: {

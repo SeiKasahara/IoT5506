@@ -1,29 +1,60 @@
-import React, { useEffect, useState } from 'react';
-//import { Line } from 'react-chartjs-2';
-//import { Chart as ChartJS } from 'chart.js/auto';
+import React, { useState } from 'react';
+import SensorChart from './SensorChart';
 
-function Dashboard() {
-  const [sensorData, setSensorData] = useState([]);
-  /*
-  const data = {
-    labels: sensorData.map(item => item.timestamp),
-    datasets: [
-      {
-        label: 'Sensor Value',
-        data: sensorData.map(item => item.value),
-        fill: false,
-        backgroundColor: 'rgba(75,192,192,0.2)',
-        borderColor: 'rgba(75,192,192,1)',
-        tension: 0.1,
-      },
-    ],
-  };*/
+function Board() {
+  const [activeSensor, setActiveSensor] = useState("");
+
+  // Function to handle chart click
+  const handleSensorClick = (sensorKey) => {
+    setActiveSensor(sensorKey === activeSensor ? null : sensorKey); // Toggle back to all charts if clicked again
+  };
 
   return (
-    <div>
-      <h1>Dashboard</h1>
+    <div className="board-container">
+      {/* Conditionally render each SensorChart based on activeSensor state */}
+      {(!activeSensor || activeSensor === 'temperature') && (
+        <div 
+          className={`bg-gray-100 rounded-lg p-5 shadow-md ${activeSensor ? 'w-full' : 'w-1/3'} h-130 flex items-start justify-start`}
+          onClick={() => handleSensorClick('temperature')}
+          style={{ cursor: 'pointer' }}
+        >
+          <SensorChart 
+            dataKey="sensor_temperature" 
+            label="°C" 
+            color="#82ca9d" 
+          />
+        </div>
+      )}
+
+      {(!activeSensor || activeSensor === 'humidity') && (
+        <div 
+          className={`bg-gray-100 rounded-lg p-5 shadow-md ${activeSensor ? 'w-full' : 'w-1/3'} h-130 flex items-start justify-start ml-5`}
+          onClick={() => handleSensorClick('humidity')}
+          style={{ cursor: 'pointer' }}
+        >
+          <SensorChart 
+            dataKey="sensor_humidity" 
+            label="%" 
+            color="#8884d8" 
+          />
+        </div>
+      )}
+
+      {(!activeSensor || activeSensor === 'gas') && (
+        <div 
+          className={`bg-gray-100 rounded-lg p-5 shadow-md ${activeSensor ? 'w-full' : 'w-1/3'} h-130 flex items-start justify-start ml-5`}
+          onClick={() => handleSensorClick('gas')}
+          style={{ cursor: 'pointer' }}
+        >
+          <SensorChart 
+            dataKey="sensor_gas" 
+            label="ppm" 
+            color="#ffc658" 
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-export default Dashboard;
+export default Board;
