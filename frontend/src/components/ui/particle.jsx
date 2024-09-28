@@ -7,7 +7,7 @@ const ParticleBackground = () => {
     });
   }, []);
 
-  return <div id="particles-js" className='fixed inset-0 w-full h-full z-[-1]' />;
+  return <div id="particles-js" className='fixed inset-0 w-full h-full z-0 pointer-events-none' />;
 };
 
 export default ParticleBackground;

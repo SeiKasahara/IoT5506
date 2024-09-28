@@ -5,7 +5,7 @@ import ParticleBackground from './components/ui/particle';
 function App() {
   return (
       <div className="App">
-      <ParticleBackground/>
+        <ParticleBackground/>
         <header className="App-header">
           <h1>Welcome to Smart Fridge</h1>
           <p>Your ultimate IoT-enabled refrigerator</p>

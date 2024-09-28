@@ -43,7 +43,7 @@ const config = {
             end: '#9F24FF',
           },
           background: {
-            'light-mode': '#FFFFFF',
+            'light-mode': '#F4F4F4',
             'dark-mode': '#1E1E1E',
           },
           component: {
@@ -56,6 +56,7 @@ const config = {
           },
           grey: {
             inactive: '#111111',
+            select: '#E4E4E4',
           },
         },
         border: 'hsl(var(--border))',

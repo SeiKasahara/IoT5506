@@ -4,25 +4,37 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: center; /* Start content from the top */
   align-items: center;
+  padding: 20px; /* Optional padding for spacing from the edges */
+  box-sizing: border-box; /* Ensure padding and borders are included in width/height calculations */
+  position: relative;
 }
 
 .App-header {
   background-color: #f4f4f4;
+  position: relative;
   padding: 40px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  width: 90%; /* Ensure the header takes 90% of the width, you can adjust this */
+  margin-top: 20px; /* Space from the top */
+  z-index: 1;
 }
 
 h1 {
   font-size: 3rem;
-  margin: 10px 0;
-  gap: 20px;
+  margin: 20px 0; /* Adds vertical margin */
 }
 
 p {
   font-size: 1.5rem;
   margin: 10px 0;
-  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .App-header {
+    width: 100%; /* Wider screens get a more compact width */
+  }
 }

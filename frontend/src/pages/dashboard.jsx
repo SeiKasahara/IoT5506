@@ -7,12 +7,16 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import TopBar from "../components/ui/dashboard/topbar.jsx";
 
 const Dashboard = () => {
-    const [activePage, setActivePage] = useState("userInformation");
+    const [activePage, setActivePage] = useState("Home");
+
     return (
         <div className="app-container">
-          <Sidebar setActivePage={setActivePage} />
+          <Sidebar
+            activePage={activePage}
+            setActivePage={setActivePage} 
+          />
           <div className="main-content">
-            <TopBar />
+            <TopBar fullWidth={false} tag={activePage}/>
             <main className="content">
               <TransitionGroup>
                 <CSSTransition
@@ -21,8 +25,8 @@ const Dashboard = () => {
                   classNames="page"
                 >
                   <div className="flex-1 flex w-full h-full">
-                    {activePage === 'userInformation' && <UserInformation />}
-                    {activePage === 'dashboard' && <Board />}
+                    {activePage === 'Home' && <UserInformation />}
+                    {activePage === 'Dashboard' && <Board />}
                   </div>
                 </CSSTransition>
               </TransitionGroup>

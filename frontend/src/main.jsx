@@ -9,6 +9,7 @@ import Dashboard from './pages/dashboard.jsx';
 import './styles/globals.css';
 import { AuthProvider } from './libs/authProvider.jsx';
 import ProtectedRoute from './libs/protectedRoute.jsx';
+import Setting from './pages/setting.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
+          <Route path="/setting" element={<ProtectedRoute element={<Setting />} />} />
         </Routes>
       </Router>
     </AuthProvider>
