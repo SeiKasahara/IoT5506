@@ -6,6 +6,8 @@ from rest_framework.views import APIView
 from .serializers import UserSerializer, ChangePasswordSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
@@ -50,14 +52,19 @@ class UserDetailView(APIView):
         serializer = UserSerializer(user)
         return Response(serializer.data)
     
-class UpdateUserView(generics.UpdateAPIView):
+class UpdateUserEmailView(generics.GenericAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserSerializer
 
-    def get_object(self):
-        return self.request.user
-    
+    def post(self, request, *args, **kwargs):
+        user = self.request.user
+        email = request.data.get('email')
+        if email:
+            user.email = email
+            user.save()
+            return Response({'status': 'email updated'}, status=status.HTTP_200_OK)
+        return Response({'error': 'email not provided'}, status=status.HTTP_400_BAD_REQUEST)
 class ChangePasswordView(generics.UpdateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -109,6 +116,8 @@ def login_view(request):
     return JsonResponse({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @csrf_exempt
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def check_unique(request):
     try:
         email = request.GET.get('email')

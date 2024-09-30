@@ -2,8 +2,16 @@ import api from './api.js';
 
 export const checkUnique = async (input, type) => {
   try {
-    const response = await api.get(`/check-unique?${type}=${input}`);
-    // axios automatically parses the response as JSON if the content type is application/json
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found');
+    }
+
+    const response = await api.get(`/check-unique?${type}=${input}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
     const data = response.data;
 
     if (data[`${type}_taken`]) {
