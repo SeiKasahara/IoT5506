@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { act, useState } from "react";
 import Sidebar from "../components/ui/dashboard/sidebar.jsx";
 import UserInformation from "../components/ui/dashboard/userinformation.jsx";
 import Board from "../components/ui/dashboard/board.jsx";
 import '../styles/dashboard.css';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import TopBar from "../components/ui/dashboard/topbar.jsx";
+import { Monitor } from "../components/ui/dashboard/monitor.jsx";
 
 const Dashboard = () => {
     const [activePage, setActivePage] = useState("Home");
@@ -27,6 +28,7 @@ const Dashboard = () => {
                   <div className="flex-1 flex w-full h-full">
                     {activePage === 'Home' && <UserInformation />}
                     {activePage === 'Dashboard' && <Board />}
+                    {activePage === 'Camera' && <Monitor/>}
                   </div>
                 </CSSTransition>
               </TransitionGroup>

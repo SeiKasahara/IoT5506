@@ -14,7 +14,12 @@ const SensorChart = ({ dataKey, label, color }) => {
 
   const fetchData = async () => {
     try {
-      const response = await api.get('iot/sensor_data/');
+      const response = await api.get('api/sensor_data/', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
       const formattedData = response.data.map(item => ({
         timestamp: new Date(item.timestamp).toLocaleString(),
         sensor_humidity: item.sensor_humidity,

@@ -21,7 +21,6 @@ const Setting = () => {
                     <div>
                         <SidebarSetting activePage={activePage} setActivePage={setActivePage} />
                     </div>
-
                     {/* Main Content */}
                     <div className="bg-white rounded-lg shadow-lg">
                         {activePage === 'Account' && <Account />}

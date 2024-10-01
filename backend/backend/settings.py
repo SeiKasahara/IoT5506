@@ -83,11 +83,11 @@ REST_FRAMEWORK = {
 ROOT_URLCONF = 'backend.urls'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'localhost' # Should be changed
-EMAIL_PORT = 1025 # Should be changed
-EMAIL_USE_TLS = True  
-EMAIL_HOST_USER = 'your_email@example.com'  # Should be changed
-EMAIL_HOST_PASSWORD = 'your_email_password'  # Should be changed
+EMAIL_HOST = 'localhost' 
+EMAIL_PORT = 1025 
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your_email@example.com'  
+EMAIL_HOST_PASSWORD = 'your_email_password'  
 
 
 from datetime import timedelta

@@ -36,6 +36,8 @@ class Device(models.Model):
     fire_beetle_token = models.CharField(max_length=32, unique=True)
     xiao_mac_address = models.CharField(max_length=17, unique=True, null=True, blank=True)
     fire_beetle_mac_address = models.CharField(max_length=17, unique=True, null=True, blank=True)
+    is_xiao_active = models.IntegerField(null=True, blank=True)
+    is_fire_beetle_active = models.IntegerField(null=True, blank=True)
 
 class SensorData(models.Model):
     deviceMAC = models.ForeignKey(Device, to_field='fire_beetle_mac_address', on_delete=models.CASCADE)

@@ -103,5 +103,4 @@ void sendPhoto() {
 
 void loop() {
     sendPhoto();
-    delay(60000); // 调整延迟时间
-}
+    delay(60000);

@@ -4,14 +4,21 @@ import { Button } from '../button';
 const Sidebar = ({ activePage, setActivePage }) => {
   const [homeVariant, setHomeVariant] = useState("menu");
   const [dashboardVariant, setDashboardVariant] = useState("menu");
+  const [cameraVariant, setCameraVariant] = useState('menu');
 
   useEffect(() => {
     if (activePage === 'Home') {
       setHomeVariant('reverse_menu');
       setDashboardVariant('menu');
+      setCameraVariant('menu');
     } else if (activePage === 'Dashboard') {
       setHomeVariant('menu');
       setDashboardVariant('reverse_menu');
+      setCameraVariant('menu');
+    } else if (activePage === 'Camera') {
+      setCameraVariant('reverse_menu');
+      setHomeVariant('menu');
+      setDashboardVariant('menu');
     }
   }, [activePage]);
 
@@ -31,6 +38,11 @@ const Sidebar = ({ activePage, setActivePage }) => {
         <li className="m-0">
           <Button size='sidebarbtn' variant={dashboardVariant} onClick={() => setActivePage('Dashboard')}>
             Dashboard
+          </Button>
+        </li>
+        <li className="m-0">
+          <Button size='sidebarbtn' variant={cameraVariant} onClick={() => setActivePage('Camera')}>
+            Monitor Camera
           </Button>
         </li>
       </ul>

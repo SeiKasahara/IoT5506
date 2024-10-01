@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserRegistrationView, check_unique, sensor_data, upload_image, login_view, xiao_verify_token, poll_xiao_verify, poll_firebeetle_verify, firebeetle_verify_token, GenerateTokensView, ChangeDeviceNameView,  UserDetailView, UpdateUserEmailView, ChangePasswordView
+from .views import LatestImageView, UserDeviceInfo, UserRegistrationView, check_unique, sensor_data, upload_image, login_view, SensorDataGet, xiao_verify_token, poll_xiao_verify, poll_firebeetle_verify, firebeetle_verify_token, GenerateTokensView, ChangeDeviceNameView,  UserDetailView, UpdateUserEmailView, ChangePasswordView
 
 
 urlpatterns = [
@@ -7,6 +7,7 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('check-unique/', check_unique, name='check-unique'),
     path('iot/sensor_data/', sensor_data, name='sensor_data'),
+    path('api/sensor_data/', SensorDataGet.as_view(), name='sensor_data_get'),
     path('iot/upload_image/', upload_image, name='upload_image'),
     path('api/user/', UserDetailView.as_view(), name='user-detail'),
     path('api/user/update-email/', UpdateUserEmailView.as_view(), name='user-update-email'),
@@ -17,4 +18,6 @@ urlpatterns = [
     path('iot/FireBeetleESP32-verify/', firebeetle_verify_token, name="firebeetle-verify"),
     path('api/poll_xiao_verify/', poll_xiao_verify, name="polling-xiao-verify"),
     path('api/poll_firebeetle_verify/', poll_firebeetle_verify, name="polling-firebeetle-verify"),
+    path('api/user-device-info/', UserDeviceInfo.as_view(), name='user-device-info'),
+    path('api/latest-image/', LatestImageView.as_view(), name='latest-image'),
 ]

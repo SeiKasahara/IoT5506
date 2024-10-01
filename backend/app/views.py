@@ -4,6 +4,11 @@ import random
 import json
 import string
 
+from threading import Timer
+
+from django.conf import settings
+from pathlib import Path
+
 from django.shortcuts import render
 from dotenv import load_dotenv
 
@@ -11,15 +16,15 @@ from app.upload_handlers import CustomUploadHandler
 load_dotenv()
 
 from .models import User, Image, SensorData, Device
-from django.http import JsonResponse, HttpResponse
+from django.http import FileResponse, Http404, JsonResponse
 from .serializers import UserSerializer, ChangePasswordSerializer, ChangeDeviceNameSerializer
 
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
+from rest_framework_simplejwt.authentication import JWTAuthentication # type: ignore
 from rest_framework.decorators import authentication_classes, permission_classes
 
 
@@ -196,6 +201,13 @@ def upload_image(request):
             return JsonResponse({'message': 'No file found in request'}, status=400)
     return JsonResponse({'message': 'Invalid request method'}, status=405)
 
+# Dictionary to keep track of timers for each device
+device_timers = {}
+
+def reset_device_status(device):
+    device.is_fire_beetle_active = 0
+    device.save()
+
 @csrf_exempt
 def sensor_data(request):
     if request.method == 'POST':
@@ -219,13 +231,38 @@ def sensor_data(request):
                 sensor_gas=sensor_gas,
                 deviceMAC=device
             )
+
+            # Set is_fire_beetle_active to 1
+            device.is_fire_beetle_active = 1
+            device.save()
+
+            # Cancel any existing timer for this device
+            if deviceMAC in device_timers:
+                device_timers[deviceMAC].cancel()
+
+            # Set a new timer to reset is_fire_beetle_active to 0 after 2 minutes
+            timer = Timer(120, reset_device_status, [device])
+            timer.start()
+            device_timers[deviceMAC] = timer
+
             return JsonResponse({'status': 'success'})
         except json.JSONDecodeError:
             return JsonResponse({'status': 'failed', 'message': 'Invalid JSON'}, status=400)
-    elif request.method == 'GET':
-        data = SensorData.objects.all().values('timestamp', 'sensor_humidity', 'sensor_temperature', 'sensor_gas')
-        return JsonResponse(list(data), safe=False)
     return JsonResponse({'status': 'failed', 'message': 'Invalid request method'}, status=400)
+class SensorDataGet(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        devicename = user.devicename
+        device = Device.objects.filter(devicename=devicename).first()
+
+        if not device:
+            return JsonResponse({'status': 'failed', 'message': 'Unauthorized device'}, status=403)
+
+        data = SensorData.objects.filter(deviceMAC=device).values('timestamp', 'sensor_humidity', 'sensor_temperature', 'sensor_gas')
+        return JsonResponse(list(data), safe=False)
 
 def generate_token():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=32))
@@ -326,7 +363,7 @@ class GenerateTokensView(APIView):
             "firebeetle_token": firebeetle_token,
             "xiao_token": xiao_token,
             "firebeetle_ino": firebeetle_ino,
-            "xiao_ino": xiao_ino
+            "xiao_ino": xiao_ino,
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -404,3 +441,43 @@ def poll_firebeetle_verify(request):
         return JsonResponse(result)
     else:
         return JsonResponse({"error": "Pending"}, status=202)
+
+class UserDeviceInfo(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        devicename = user.devicename
+        device = Device.objects.filter(devicename=devicename).first()
+
+        if not device:
+            return Response({'status': 'failed', 'message': 'Device not found'}, status=404)
+
+        data = {
+            'username': user.username,
+            'devicename': devicename,
+            'fire_beetle_mac_address': device.fire_beetle_mac_address,
+            'xiao_mac_address': device.xiao_mac_address,
+            'is_fire_beetle_active': device.is_fire_beetle_active,
+            'is_xiao_active': device.is_xiao_active,
+        }
+
+        return Response(data)
+
+class LatestImageView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+            media_path = Path(settings.MEDIA_ROOT)
+            images = list(media_path.glob('*.jpg')) + list(media_path.glob('*.png'))  # Adjust the extensions as needed
+            latest_image = max(images, key=os.path.getctime) if images else None
+
+            if latest_image:
+                try:
+                    return FileResponse(open(latest_image, 'rb'), content_type='image/jpeg')
+                except FileNotFoundError:
+                    raise Http404("Image not found")
+            else:
+                return JsonResponse({'error': 'No images found'}, status=404)
