@@ -27,12 +27,24 @@ SCK (Serial Clock)  ->  A5 on Uno/Pro-Mini, 21 on Mega2560/Due, 3 Leonardo/Pro-M
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
+#include <HTTPClient.h>
 
-// Your WiFi credentials.
-char ssid[] = "gp";
-char pass[] = "guspraaa";
-//////////////////////////////
+// Global Variables
+float temp(NAN), hum(NAN), pres(NAN), CH4;
 
+// Backend
+#define SSID "Touhou"
+#define PW "1154Q/g0"
+#define SERVER_IP "192.168.137.1"
+#define SERVER_PORT "8000"
+#define SERVER_PATH "/backend/iot/sensor_data/"
+
+#define MQ9B_PIN 34  // MQ-9B
+
+const char* ssid = SSID;
+const char* password = PW;
+const char* serverName = "http://" SERVER_IP ":" SERVER_PORT SERVER_PATH;
+/////////////////////////////
 
 #include <EnvironmentCalculations.h>
 #include <BME280I2C.h>
@@ -85,6 +97,18 @@ void setup()
 {
   Serial.begin(SERIAL_BAUD);
 
+  WiFi.begin(ssid, password);
+
+  // Connect to WiFi
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  // Initialize MQ-9B sensor
+  pinMode(MQ9B_PIN, INPUT);
+
   while(!Serial) {} // Wait
 
   Wire.begin();
@@ -114,7 +138,7 @@ void setup()
   mq9setup();
 
   //BLYNK SETUP
-  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, password);
 
 }
 
@@ -159,27 +183,11 @@ void mq9setup(){
 //////////////////////////////////////////////////////////////////
 // Variables for non-blocking timing
 unsigned long previousMillis = 0;
+unsigned long previousHttpMillis = 0;
 const long interval = 5000;  // 1-second interval for data updates
+const long httpInterval = 20000;
 
-void loop()
-{
-   
-  //  printBME280Data(&Serial);
-  //  delay(500);
 
-  // Non-blocking update every second
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-
-    // Send sensor data every second
-    printBME280Data(&Serial);
-
-    printMQ9Data();
-  }
-
-  Blynk.run();
-}
 
 //////////////////////////////////////////////////////////////////
 // Temperature threshold
@@ -191,7 +199,6 @@ void printBME280Data
    Stream* client
 )
 {
-   float temp(NAN), hum(NAN), pres(NAN);
 
    BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
   //  BME280::PresUnit presUnit(BME280::PresUnit_hPa);
@@ -281,15 +288,10 @@ void printMQ9Data(){
   float LPG = MQ9.readSensor(); // Sensor will read PPM concentration using the model, a and b values set previously or from the setup
 
   MQ9.setA(4269.6); MQ9.setB(-2.648); // Configure the equation to to calculate LPG concentration
-  float CH4 = MQ9.readSensor(); // Sensor will read PPM concentration using the model, a and b values set previously or from the setup
+  CH4 = MQ9.readSensor(); // Sensor will read PPM concentration using the model, a and b values set previously or from the setup
 
   MQ9.setA(599.65); MQ9.setB(-2.244); // Configure the equation to to calculate LPG concentration
   float CO = MQ9.readSensor(); // Sensor will read PPM concentration using the model, a and b values set previously or from the setup
-
-  // Serial.print("|    "); Serial.print(LPG);
-  // Serial.print("    |    "); Serial.print(CH4);
-  // Serial.print("    |    "); Serial.print(CO); 
-  // Serial.println("    |");
 
   Serial.print("LPG: "); Serial.print(LPG);
   Serial.print("    CH4: "); Serial.print(CH4);
@@ -299,4 +301,50 @@ void printMQ9Data(){
   // delay(500); //Sampling frequency
   return;
 
+}
+
+void loop()
+{
+   
+  //  printBME280Data(&Serial);
+  //  delay(500);
+
+  // Non-blocking update every second
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+
+    // Send sensor data every second
+    printBME280Data(&Serial);
+
+    printMQ9Data();
+  }
+
+  if (currentMillis - previousHttpMillis >= httpInterval) {
+    previousHttpMillis = currentMillis;
+
+    if (WiFi.status() == WL_CONNECTED) {
+      HTTPClient http;
+      http.begin(serverName);
+      http.addHeader("Content-Type", "application/json");
+
+      String jsonPayload = "{\"sensor_temperature\":\"" + String(temp) + "\",\"sensor_humidity\":\"" + String(hum) + "\",\"sensor_gas_ch4\":\"" + String(CH4) + "\",\"deviceMAC\":\"" + WiFi.macAddress() + "\"}";
+
+      int httpResponseCode = http.POST(jsonPayload);
+
+      if (httpResponseCode > 0) {
+        String response = http.getString();
+        Serial.println("HTTP Response code: " + String(httpResponseCode));
+        Serial.println("Response: " + response);
+      } else {
+        Serial.println("Error on HTTP request");
+      }
+
+      http.end();
+    } else {
+      Serial.println("WiFi Disconnected");
+    }
+  }
+
+  Blynk.run();
 }

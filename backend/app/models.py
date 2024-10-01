@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 
-
 class User(AbstractUser):
     first_name = None
     last_name = None
@@ -27,8 +26,19 @@ class User(AbstractUser):
         help_text='Specific permissions for this user.',
     )
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'devicename']
+
+
+class Device(models.Model):
+    devicename = models.ForeignKey(User, to_field='devicename', on_delete=models.CASCADE)
+    xiao_token = models.CharField(max_length=32, unique=True)
+    fire_beetle_token = models.CharField(max_length=32, unique=True)
+    xiao_mac_address = models.CharField(max_length=17, unique=True, null=True, blank=True)
+    fire_beetle_mac_address = models.CharField(max_length=17, unique=True, null=True, blank=True)
+
 class SensorData(models.Model):
-    devicename = models.CharField(max_length=150)
+    deviceMAC = models.ForeignKey(Device, to_field='fire_beetle_mac_address', on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     sensor_humidity = models.FloatField()
     sensor_temperature = models.FloatField()
@@ -38,6 +48,7 @@ class SensorData(models.Model):
         return f"{self.timestamp}: {self.sensor_humidity}, {self.sensor_temperature}"
     
 class Image(models.Model):
-    devicename = models.CharField(max_length=150, unique=True)
+    devicename = models.ForeignKey(User, to_field='devicename', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+

@@ -2,16 +2,8 @@ import api from './api.js';
 
 export const checkUnique = async (input, type) => {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('No token found');
-    }
 
-    const response = await api.get(`/check-unique?${type}=${input}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    const response = await api.get(`/check-unique?${type}=${input}`);
     const data = response.data;
 
     if (data[`${type}_taken`]) {

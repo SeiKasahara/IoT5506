@@ -28,3 +28,6 @@ class UserSerializer(serializers.ModelSerializer):
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
+
+class ChangeDeviceNameSerializer(serializers.Serializer):
+    new_devicename = serializers.CharField(max_length=150)

@@ -1,16 +1,31 @@
-from .models import User, Image, SensorData
+import os
+import random
+
+import json
+import string
+
+from django.shortcuts import render
+from dotenv import load_dotenv
+
+from app.upload_handlers import CustomUploadHandler
+load_dotenv()
+
+from .models import User, Image, SensorData, Device
 from django.http import JsonResponse, HttpResponse
+from .serializers import UserSerializer, ChangePasswordSerializer, ChangeDeviceNameSerializer
+
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserSerializer, ChangePasswordSerializer
+
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import authentication_classes, permission_classes
-from rest_framework.permissions import IsAuthenticated
+
+
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-import json
+from django.db import IntegrityError, transaction, models
+from django.core.cache import cache
 from django.contrib.auth import authenticate, login
 
 
@@ -20,6 +35,8 @@ from django.contrib.auth import authenticate, login
 # A user can access web application resources even after their account has been disabled
 # due to missing user validation checks via the for_user method.
 ##########################################################################################
+
+BACKEND_URL = os.environ.get("BACKEND_URL")
 
 def generate_token_for_user(user):
     if not user.is_active:
@@ -89,6 +106,34 @@ class ChangePasswordView(generics.UpdateAPIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class ChangeDeviceNameView(generics.UpdateAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ChangeDeviceNameSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        
+        if serializer.is_valid():
+            # Set new device name
+            new_devicename = serializer.validated_data.get("new_devicename")
+            old_devicename = user.devicename
+            try:
+                with transaction.atomic():
+                    user.devicename = new_devicename
+                    user.save()
+                    Device.objects.filter(devicename=old_devicename).update(devicename=new_devicename)
+                    Image.objects.filter(devicename=old_devicename).update(devicename=new_devicename)
+            except IntegrityError:
+                return Response({"detail": "Failed to update table"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"detail": "Devicename updated successfully."}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 @csrf_exempt
 def login_view(request):
     if request.method == 'POST':
@@ -116,8 +161,6 @@ def login_view(request):
     return JsonResponse({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @csrf_exempt
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated])
 def check_unique(request):
     try:
         email = request.GET.get('email')
@@ -144,30 +187,37 @@ def check_unique(request):
 
 @csrf_exempt
 def upload_image(request):
-    if request.method == 'POST' and request.FILES['image']:
-        image = request.FILES['image']
-        Image.objects.create(image=image)
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'failed'}, status=400)
+    request.upload_handlers.insert(0, CustomUploadHandler(request))
+    if request.method == 'POST':
+        file = request.FILES.get('file')
+        if file:
+            return JsonResponse({'message': 'File uploaded successfully'})
+        else:
+            return JsonResponse({'message': 'No file found in request'}, status=400)
+    return JsonResponse({'message': 'Invalid request method'}, status=405)
 
 @csrf_exempt
 def sensor_data(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            devicename = data.get('devicename')
             sensor_humidity = data.get('sensor_humidity')
             sensor_temperature = data.get('sensor_temperature')
-            sensor_gas = data.get('sensor_gas')
+            sensor_gas = data.get('sensor_gas_ch4')
+            deviceMAC = data.get('deviceMAC')
 
-            if not all([devicename, sensor_humidity, sensor_temperature, sensor_gas]):
+            if not all([sensor_humidity, sensor_temperature, sensor_gas, deviceMAC]):
                 return JsonResponse({'status': 'failed', 'message': 'Missing fields'}, status=400)
 
+            device = Device.objects.filter(fire_beetle_mac_address=deviceMAC).first()
+            if not device:
+                return JsonResponse({'status': 'failed', 'message': 'Unauthorized MAC address'}, status=403)
+
             SensorData.objects.create(
-                devicename=devicename,
                 sensor_humidity=sensor_humidity,
                 sensor_temperature=sensor_temperature,
-                sensor_gas=sensor_gas
+                sensor_gas=sensor_gas,
+                deviceMAC=device
             )
             return JsonResponse({'status': 'success'})
         except json.JSONDecodeError:
@@ -176,3 +226,181 @@ def sensor_data(request):
         data = SensorData.objects.all().values('timestamp', 'sensor_humidity', 'sensor_temperature', 'sensor_gas')
         return JsonResponse(list(data), safe=False)
     return JsonResponse({'status': 'failed', 'message': 'Invalid request method'}, status=400)
+
+def generate_token():
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=32))
+
+def create_ino_content(device_name, token):
+    ino_content = f"""
+    #include <WiFi.h>
+    #include <HTTPClient.h>
+    #include <EEPROM.h>
+
+    const char* ssid = "ssid"; // Enter your Wi-Fi name
+    const char* password = "password"; // Enter your Wi-Fi password
+    const char* serverName = "{BACKEND_URL}/iot/{device_name}-verify/";
+    const int tokenAddress = 0; // EEPROM address to store the token
+
+    void setup() {{
+        Serial.begin(115200);
+        WiFi.begin(ssid, password);
+
+        while (WiFi.status() != WL_CONNECTED) {{
+            delay(1000);
+            Serial.println("Connecting to WiFi...");
+        }}
+
+        Serial.println("Connected to WiFi");
+
+        // Store token in EEPROM if not already stored
+        /*
+        if (EEPROM.read(tokenAddress) != '{token}') {{
+            EEPROM.begin(512);
+            for (int i = 0; i < strlen("{token}"); i++) {{
+                EEPROM.write(tokenAddress + i, '{token}'[i]);
+            }}
+            EEPROM.commit();
+        }}*/
+
+        // Send data to backend
+        sendData();
+    }}
+
+    void loop() {{
+        // Continuously send data every 10-20 seconds
+        sendData();
+        delay(10000); // Adjust the delay as needed (10000 ms = 10 seconds)
+    }}
+
+    void sendData() {{
+        if (WiFi.status() == WL_CONNECTED) {{
+            HTTPClient http;
+            http.begin(serverName);
+            http.addHeader("Content-Type", "application/json");
+
+            String postData = "{{\\"mac_address\\":\\"" + WiFi.macAddress() + "\\", \\"token\\":\\"" + "{token}" + "\\"}}";
+
+            int httpResponseCode = http.POST(postData);
+
+            if (httpResponseCode == 200) {{
+                String response = http.getString();
+                Serial.println(httpResponseCode);
+                Serial.println(response);
+                if (httpResponseCode == 200) {{
+                    Serial.println("HTTP POST successful, disconnecting WiFi...");
+                    WiFi.disconnect();
+                }}
+            }} else {{
+                Serial.print("Error on sending POST: ");
+                Serial.println(httpResponseCode);
+            }}
+
+            http.end();
+        }}
+    }}
+    """
+    return ino_content
+class GenerateTokensView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        firebeetle_token = generate_token()
+        xiao_token = generate_token()
+
+        user = request.user
+
+        # Ensure that devicename is a User instance
+        device, created = Device.objects.update_or_create(
+            devicename=user,  # Pass the User instance here
+            defaults={
+                "fire_beetle_token": firebeetle_token,
+                "xiao_token": xiao_token
+            }
+        )
+
+        firebeetle_ino = create_ino_content("FireBeetleESP32", firebeetle_token)
+        xiao_ino = create_ino_content("XIAOESP32Camera", xiao_token)
+
+        response_data = {
+            "firebeetle_token": firebeetle_token,
+            "xiao_token": xiao_token,
+            "firebeetle_ino": firebeetle_ino,
+            "xiao_ino": xiao_ino
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+@csrf_exempt
+def xiao_verify_token(request):
+    try:
+        data = json.loads(request.body)
+        mac_address = data.get('mac_address')
+        token = data.get('token')
+
+        if not token:
+            return JsonResponse({"error": "Token is required"}, status=400)
+
+        device = Device.objects.filter(xiao_token=token).first()
+
+        if device:
+            device.xiao_mac_address = mac_address
+            device.save()
+            message = {"message": "Xiao bound successfully"}
+        else:
+            return JsonResponse({"error": "Invalid token"}, status=400)
+
+        cache.set(f'xiao_verify_{token}', message, timeout=300)
+
+        return JsonResponse(message, status=200 if device else 400)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+@csrf_exempt
+def firebeetle_verify_token(request):
+    try:
+        data = json.loads(request.body)
+        mac_address = data.get('mac_address')
+        token = data.get('token')
+
+        if not token:
+            return JsonResponse({"error": "Token is required"}, status=400)
+
+        device = Device.objects.filter(fire_beetle_token=token).first()
+
+        if device:
+            device.fire_beetle_mac_address = mac_address
+            device.save()
+            message = {"message": "FireBeetle bound successfully"}
+        else:
+            return JsonResponse({"error": "Invalid token"}, status=400)
+
+        cache.set(f'firebeetle_verify_{token}', message, timeout=300)
+
+        return JsonResponse(message, status=200 if device else 400)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+def poll_xiao_verify(request):
+    token = request.GET.get('token')
+    if not token:
+        return JsonResponse({"error": "Token is required"}, status=400)
+    
+    result = cache.get(f'xiao_verify_{token}')
+    if result:
+        return JsonResponse(result)
+    else:
+        return JsonResponse({"error": "Pending"}, status=202)
+
+def poll_firebeetle_verify(request):
+    token = request.GET.get('token')
+    if not token:
+        return JsonResponse({"error": "Token is required"}, status=400)
+    
+    result = cache.get(f'firebeetle_verify_{token}')
+    if result:
+        return JsonResponse(result)
+    else:
+        return JsonResponse({"error": "Pending"}, status=202)

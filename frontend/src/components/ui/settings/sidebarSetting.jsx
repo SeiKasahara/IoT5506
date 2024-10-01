@@ -4,14 +4,21 @@ import { Button } from '../button';
 const SidebarSetting = ({ activePage, setActivePage }) => {
   const [homeVariant, setHomeVariant] = useState("menu");
   const [dashboardVariant, setDashboardVariant] = useState("menu");
+  const [IoTVariant, setIoTVariant] = useState("menu");
 
   useEffect(() => {
     if (activePage === 'Account') {
       setHomeVariant('reverse_menu');
       setDashboardVariant('menu');
+      setIoTVariant('menu');
     } else if (activePage === 'Message') {
       setHomeVariant('menu');
       setDashboardVariant('reverse_menu');
+      setIoTVariant('menu');
+    } else if (activePage === 'BindIOT') {
+      setIoTVariant('reverse_menu');
+      setHomeVariant('menu');
+      setDashboardVariant('menu');
     }
   }, [activePage]);
 
@@ -32,7 +39,16 @@ const SidebarSetting = ({ activePage, setActivePage }) => {
             variant={homeVariant} 
             onClick={() => setActivePage('Account')}
           >
-            Account and Password
+            Account Settings
+          </Button>
+        </li>
+        <li>
+          <Button 
+            size="sidebarbtn" 
+            variant={IoTVariant} 
+            onClick={() => setActivePage('BindIOT')}
+          >
+            Bind your IoT device
           </Button>
         </li>
         <li>

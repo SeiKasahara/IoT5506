@@ -3,6 +3,7 @@ import SidebarSetting from "../components/ui/settings/sidebarSetting";
 import { useState } from "react";
 import Account from "../components/ui/settings/account";
 import Message from "../components/ui/settings/message";
+import GenerateToken from "../components/ui/settings/generateToken";
 
 const Setting = () => {
     const [activePage, setActivePage] = useState("Account");
@@ -25,6 +26,7 @@ const Setting = () => {
                     <div className="bg-white rounded-lg shadow-lg">
                         {activePage === 'Account' && <Account />}
                         {activePage === 'Message' && <Message />}
+                        {activePage === 'BindIOT' && <GenerateToken />}
                     </div>
                 </div>
             </div>

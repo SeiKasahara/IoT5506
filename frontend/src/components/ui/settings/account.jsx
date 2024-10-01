@@ -24,6 +24,11 @@ const Account = () => {
   const [newPW, setNewPW] = useState('');
   const [oldPW, setOldPW] = useState('');
 
+  const [deviceName, setDeviceName] = useState(null);
+  const [newDeviceName, setNewDeviceName] = useState('');
+  const [deviceVariant, setDeviceVariant] = useState('inactive');
+  const [deviceNameInputVariant, setDeviceNameInputVariant] = useState('default');
+  const [devicenameErrorMessage, setDevicenameErrorMessage] = useState('');
 
   const getEmail = async () => {
     try {
@@ -38,6 +43,21 @@ const Account = () => {
       setUserEmail(userEmail);
     } catch (error) {
       console.error('Error fetching user email:', error);
+    }
+  };
+
+  const getDeviceName = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await api.get('/api/user/', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const userDeviceName = response.data.devicename;
+      setDeviceName(userDeviceName);
+    } catch (error) {
+      console.error('Error fetching user\'s device name:', error);
     }
   };
 
@@ -60,11 +80,14 @@ const Account = () => {
           );
   
           if (response.status !== 200) {
+            setEmailInputState('error');
+            setErrorMessage('Failed to update email');
             throw new Error('Failed to update email');
           }
   
           const data = response.data;
           console.log('Email updated successfully', data);
+          alert('Email updated successfully');
           window.location.reload();
         } catch (error) {
           console.error('Error updating user email', error);
@@ -107,10 +130,59 @@ const Account = () => {
       }
     }
   };
+
+  const handleDeviceNameSubmit = async () => {
+    try {
+      const message = await checkUnique(newDeviceName, 'devicename');
+      if (message) {
+        setDeviceNameInputVariant('error');
+        setDevicenameErrorMessage(message);
+      } else {
+        try {
+          const response = await api.put('api/user/change-devicename/', 
+            {
+              new_devicename: newDeviceName,
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              },
+            }
+          );
+      
+          if (response.status === 200) {
+            setDeviceNameInputVariant('default');
+            setDevicenameErrorMessage('');
+            const data = response.data;
+            console.log('Devicename updated successfully', data);
+            alert('Devicename updated successfully');
+            window.location.reload();
+          } else {
+            setDeviceNameInputVariant('error');
+            setDevicenameErrorMessage('Failed to update devicename');
+            throw new Error('Failed to update devicename');
+          }
+        } catch (error) {
+          if (error.response && error.response.data) {
+            console.log(error.response.data.detail || 'Error updating devicename');
+          } else {
+            console.error('Error updating user devicename', error);
+            setDeviceNameInputVariant('error');
+            setDevicenameErrorMessage('Failed to update devicename');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('An error occurred:', error);
+    }
+
+  };
   
 
   useEffect(() => {
     getEmail();
+    getDeviceName();
   }, []);
 
   const handleEditIoTClick = () => {
@@ -119,6 +191,10 @@ const Account = () => {
 
   const handleCloseIoTModal = () => {
     setIoTShowModal(false);
+    setNewDeviceName(null);
+    setDeviceNameInputVariant('default');
+    setDeviceVariant('inactive');
+    setDevicenameErrorMessage('');
   };
 
   const handleEditEmailClick = () => {
@@ -127,6 +203,9 @@ const Account = () => {
 
   const handleCloseEditEmail = () => {
     setEmailShowModal(false);
+    setNewEmail('');
+    setEmailInputState('default');
+    setErrorMessage('');
   };
 
   const handlePasswordChange = () => {
@@ -135,6 +214,9 @@ const Account = () => {
 
   const handleClosePassword = () => {
     setPasswordChange(false);
+    setNewPW('');
+    setPWbuttonVariant('inactive');
+    setPasswordErrorMessage('');
   }
 
   const handleEmailChange = (event) => {
@@ -181,6 +263,12 @@ const Account = () => {
 
   const PWVariant = PWbuttonVariant === 'default' && oldPWbuttonVariant === 'default' ? 'default' : 'inactive';
 
+  const handleDeviceNameChange = (event) => {
+    const value = event.target.value;
+    setNewDeviceName(value);
+    setDeviceVariant(event.target.value ? 'default' : 'inactive');
+  };
+
   return (
     <div className="p-6 bg-volt-background-light-mode w-[1000px] h-full rounded-md shadow-md">
       <p className="text-xl font-bold mb-4">Account and Password</p>
@@ -192,7 +280,7 @@ const Account = () => {
 
       <div className="space-y-10">
         <div className="flex justify-between items-center">
-          <span className="font-semibold">Bind IoT Device</span>
+          <span className="font-semibold">Rename IoT Device</span>
           <button className="text-blue-500" onClick={handleEditIoTClick}>Edit</button>
         </div>
 
@@ -211,11 +299,20 @@ const Account = () => {
       {IoTshowModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-md shadow-lg p-8 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Edit Informations</h3>
-            {/* Add your form for editing here */}
+            <p className="text-lg font-semibold mb-4">Edit Informations</p>
+            <h3  className="text-lg font-semibold mb-4">Current Device Name</h3>
+            <h3 className="text-lg font-semibold mb-4 text-gray-400">{deviceName}</h3>
             <div className="mb-4">
-              <label className="block font-semibold mb-1">IoT Device Token</label>
-              <input type="text" className="w-full border border-gray-300 rounded-md p-2" />
+              <label className="block font-semibold mb-1">Enter new device name</label>
+              <Input
+                className="w-full"
+                type='text'
+                variant={deviceNameInputVariant}
+                value={newDeviceName}
+                onChange={handleDeviceNameChange}
+                placeholder='Enter your new device name'
+              ></Input>
+              {devicenameErrorMessage && <div style={{ color: '#f06292' }}>{devicenameErrorMessage}</div>}
             </div>
             <div className="flex justify-end space-x-2">
               <button 
@@ -223,9 +320,14 @@ const Account = () => {
                 onClick={handleCloseIoTModal}>
                 Cancel
               </button>
-              <button className="px-4 py-2 bg-blue-500 text-white rounded-md">
+              <Button 
+                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                variant={deviceVariant}
+                onClick={handleDeviceNameSubmit}
+                disabled={deviceVariant === 'inactive'}
+              >
                 Save
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -234,8 +336,7 @@ const Account = () => {
       {EmailshowModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-md shadow-lg p-8 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Edit Informations</h3>
-            {/* Add your form for editing here */}
+            <p className="text-lg font-semibold mb-4">Edit Informations</p>
             <h3  className="text-lg font-semibold mb-4">User Email</h3>
             <h3 className="text-lg font-semibold mb-4 text-gray-400">{userEmail}</h3>
             <div className="mb-4">
@@ -271,8 +372,7 @@ const Account = () => {
       {PasswordChange && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-md shadow-lg p-8 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Edit Informations</h3>
-            {/* Add your form for editing here */}
+            <p className="text-lg font-semibold mb-4">Edit Informations</p>
             <h3  className="text-lg font-semibold mb-4">Change your password</h3>
             <div className="mb-4">
                 <label className="block font-semibold mb-1">Old Password</label>

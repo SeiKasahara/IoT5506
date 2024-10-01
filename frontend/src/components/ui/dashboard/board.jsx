@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import SensorChart from './SensorChart';
+import { Button } from '../button';
 
 function Board() {
   const [activeSensor, setActiveSensor] = useState("");

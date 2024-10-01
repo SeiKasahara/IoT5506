@@ -71,13 +71,13 @@ export const PageTwo = ({
         ></Input>
       </div>
       <div className='inputcontainer'>
-        <p className='mention'>Bind your IoT device(If you don't have, you can skip this)</p>
+        <p className='mention'>Name your IoT device(If you don't have, you can skip this)</p>
         <Input
           variant={deviceNameInputVariant}
           type='string'
           value={deviceName}
           onChange={handleDeviceNameChange}
-          placeholder='Enter your device token'
+          placeholder='Enter your device name'
         ></Input>
         {devicenameErrorMessage && (
           <div style={{ color: '#f06292' }}>{devicenameErrorMessage}</div>
