@@ -86,8 +86,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'localhost' 
 EMAIL_PORT = 1025 
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your_email@example.com'  
-EMAIL_HOST_PASSWORD = '1234'  
+EMAIL_HOST_USER = '****'  
+EMAIL_HOST_PASSWORD = '****'  
 
 
 from datetime import timedelta
