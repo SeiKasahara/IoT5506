@@ -12,6 +12,9 @@ services:
       - 8000:8000
     volumes:
       - ${LOCAL_WORKSPACE_FOLDER:-.}/backend:/app
+    environment:
+      - DJANGO_ROOT=/app
+
   frontend:
     container_name: IoT-frontend
     image: iot-frontend-container:latest

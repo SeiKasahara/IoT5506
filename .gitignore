@@ -39,3 +39,4 @@ yarn-error.log*
 /backend/backend/__pycache__/
 /backend/app/__pycache__/
 /backend/app/migrations/__pycache__/
+/backend/media/

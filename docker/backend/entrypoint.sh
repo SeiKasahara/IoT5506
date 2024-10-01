@@ -1,5 +1,20 @@
 #!/bin/bash
 
+DJANGO_ROOT=${DJANGO_ROOT:-"/app"}
+echo "Get Django Root"
+
+MEDIA_DIR="$DJANGO_ROOT/media"
+
+echo "Located Media directiory"
+
+DELAY=3600
+
+(
+  sleep $DELAY
+  find "$MEDIA_DIR" -type f -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o -name "*.gif" -delete
+  echo "Media File has been deleted"
+) &
+
 echo "Applying database migrations"
 python manage.py migrate --noinput
 

@@ -4,6 +4,7 @@ import random
 
 import json
 import string
+import uuid
 
 from threading import Timer
 
@@ -13,7 +14,6 @@ from pathlib import Path
 from django.shortcuts import render
 from dotenv import load_dotenv
 
-from app.upload_handlers import CustomUploadHandler
 load_dotenv()
 
 from .models import EmailVerificationCode, User, Image, SensorData, Device
@@ -26,8 +26,6 @@ from rest_framework.views import APIView
 
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from rest_framework_simplejwt.authentication import JWTAuthentication # type: ignore
-from rest_framework.decorators import authentication_classes, permission_classes
-
 
 from django.views.decorators.csrf import csrf_exempt
 from django.db import IntegrityError, transaction, models
@@ -35,6 +33,8 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate, login
 from django.utils import timezone
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 
 ##########################################################################################
 # djangorestframework-simplejwt version 5.3.1 and before 
@@ -271,18 +271,28 @@ def check_unique(request):
         return JsonResponse(data)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
 
 @csrf_exempt
 def upload_image(request):
-    request.upload_handlers.insert(0, CustomUploadHandler(request))
     if request.method == 'POST':
-        file = request.FILES.get('file')
-        if file:
-            return JsonResponse({'message': 'File uploaded successfully'})
+        # Read the raw body of the request
+        image_data = request.body
+        
+        if image_data:
+            # Generate a unique filename
+            unique_filename = f"{uuid.uuid4()}.jpg"
+            
+            # Save the image data to the MEDIA_ROOT directory
+            path = default_storage.save(unique_filename, ContentFile(image_data))
+            
+            # Get the full path to the saved file
+            full_path = os.path.join(settings.MEDIA_ROOT, path)
+            
+            return JsonResponse({'message': 'File uploaded successfully', 'file_path': full_path})
         else:
             return JsonResponse({'message': 'No file found in request'}, status=400)
     return JsonResponse({'message': 'Invalid request method'}, status=405)
-
 # Dictionary to keep track of timers for each device
 device_timers = {}
 
