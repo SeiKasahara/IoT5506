@@ -30,6 +30,14 @@ const Account = () => {
   const [deviceNameInputVariant, setDeviceNameInputVariant] = useState('default');
   const [devicenameErrorMessage, setDevicenameErrorMessage] = useState('');
 
+  const [verifyCodePage, setVerifyCodePage] = useState(false);
+
+  const [emailMessage, setEmailMessage] = useState('');
+  const [verifyCode, setVerifyCode] = useState('');
+  const [VCodeVariant, setVCodeVariant] = useState('default');
+  const [verifyCodevariant, setVerifyCodevariant] = useState('inactive');
+  const [VCodeErrorMessage, setVCodeErrorMessage] = useState('');
+
   const getEmail = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -69,6 +77,7 @@ const Account = () => {
         setErrorMessage(message);
       } else {
         try {
+          alert('Verification code sent');
           const response = await api.post('/api/user/update-email/', 
             { email: newEmail },
             {
@@ -85,10 +94,15 @@ const Account = () => {
             throw new Error('Failed to update email');
           }
   
-          const data = response.data;
-          console.log('Email updated successfully', data);
-          alert('Email updated successfully');
-          window.location.reload();
+          setEmailMessage('Code sent, will be redirected to verification code page');
+          //window.location.reload();
+          setVerifyCodePage(true);
+          setTimeout(function(){
+            setEmailShowModal(false);
+            setEmailInputState('default');
+            setErrorMessage('');
+            setEmailMessage('');
+          },3000);
         } catch (error) {
           console.error('Error updating user email', error);
         }
@@ -130,6 +144,34 @@ const Account = () => {
       }
     }
   };
+
+  const handleVerifyCodeSubmit = async () => {
+    try {
+      const response = await api.post('api/user/verify-email-code/',
+        {
+          code: verifyCode,
+          email: newEmail
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      )
+      if (response.status !== 200) {
+        setVCodeVariant('error');
+        setVCodeErrorMessage('Invalid verification code');
+        throw new Error('Invalid verification code');
+      }
+
+      alert('Email Successfully Updated');
+      window.location.reload();
+    } catch (error) {
+      setVCodeVariant('error');
+      setVCodeErrorMessage('Unknown Error');
+    }
+  }
 
   const handleDeviceNameSubmit = async () => {
     try {
@@ -206,10 +248,23 @@ const Account = () => {
     setNewEmail('');
     setEmailInputState('default');
     setErrorMessage('');
+    setEmailMessage('');
   };
 
   const handlePasswordChange = () => {
     setPasswordChange(true);
+  }
+
+  const handleVerifyCodePageClose = () => {
+    setVerifyCodePage(false);
+    setEmailShowModal(false);
+    setEmailInputState('default');
+    setVCodeErrorMessage('');
+    setNewEmail('');
+    setVerifyCode('');
+    setErrorMessage('');
+    setEmailMessage('');
+    setVCodeVariant('default')
   }
 
   const handleClosePassword = () => {
@@ -269,6 +324,12 @@ const Account = () => {
     setDeviceVariant(event.target.value ? 'default' : 'inactive');
   };
 
+  const handleVCodeChange = (event) => {
+    const value = event.target.value;
+    setVerifyCode(value);
+    setVerifyCodevariant(event.target.value ? 'default' : 'inactive');
+  }
+
   return (
     <div className="p-6 bg-volt-background-light-mode w-[1000px] h-full rounded-md shadow-md">
       <p className="text-xl font-bold mb-4">Account and Password</p>
@@ -312,7 +373,9 @@ const Account = () => {
                 onChange={handleDeviceNameChange}
                 placeholder='Enter your new device name'
               ></Input>
-              {devicenameErrorMessage && <div style={{ color: '#f06292' }}>{devicenameErrorMessage}</div>}
+              {devicenameErrorMessage && 
+              <div style={{ color: '#f06292' }}>{devicenameErrorMessage}</div>
+              }
             </div>
             <div className="flex justify-end space-x-2">
               <button 
@@ -327,6 +390,43 @@ const Account = () => {
                 disabled={deviceVariant === 'inactive'}
               >
                 Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {verifyCodePage && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-md shadow-lg p-8 max-w-md w-full">
+            <p className="text-lg font-semibold mb-4">Verification Code</p>
+            <div className="mb-4">
+              <label className="block font-semibold mb-1">Enter your code</label>
+              <Input
+                className="w-full"
+                type='text'
+                variant={VCodeVariant}
+                value={verifyCode}
+                onChange={handleVCodeChange}
+                placeholder='Enter your verification code'
+              ></Input>
+              {VCodeErrorMessage && 
+              <div style={{ color: '#f06292' }}>{VCodeErrorMessage}</div>
+              }
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button 
+                className="px-4 py-2 bg-gray-300 rounded-md" 
+                onClick={handleVerifyCodePageClose}>
+                Cancel
+              </button>
+              <Button 
+                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                variant={verifyCodevariant}
+                onClick={handleVerifyCodeSubmit}
+                disabled={verifyCodevariant === 'inactive'}
+              >
+                Finish
               </Button>
             </div>
           </div>
@@ -350,6 +450,7 @@ const Account = () => {
                 placeholder='Enter your new email address'
               ></Input>
               {errorMessage && <div style={{ color: '#f06292' }}>{errorMessage}</div>}
+              {emailMessage && <div className='text-green-600'>{emailMessage}</div>}
             </div>
             <div className="flex justify-end space-x-2">
               <button 
@@ -362,7 +463,7 @@ const Account = () => {
                 onClick={handleEmailSubmit}
                 disabled={buttonVariant === 'inactive'}
               >
-                Save
+                Next
               </Button>
             </div>
           </div>

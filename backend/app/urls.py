@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import LatestImageView, UserDeviceInfo, UserRegistrationView, check_unique, sensor_data, upload_image, login_view, SensorDataGet, xiao_verify_token, poll_xiao_verify, poll_firebeetle_verify, firebeetle_verify_token, GenerateTokensView, ChangeDeviceNameView,  UserDetailView, UpdateUserEmailView, ChangePasswordView
+from .views import ChangeAlertView, LatestImageView, UserDeviceInfo, UserRegistrationView, VerifyEmailCodeView, check_unique, sensor_data, upload_image, login_view, SensorDataGet, xiao_verify_token, poll_xiao_verify, poll_firebeetle_verify, firebeetle_verify_token, GenerateTokensView, ChangeDeviceNameView,  UserDetailView, UpdateUserEmailView, ChangePasswordView
 
 
 urlpatterns = [
@@ -11,6 +11,8 @@ urlpatterns = [
     path('iot/upload_image/', upload_image, name='upload_image'),
     path('api/user/', UserDetailView.as_view(), name='user-detail'),
     path('api/user/update-email/', UpdateUserEmailView.as_view(), name='user-update-email'),
+    path('api/user/verify-email-code/', VerifyEmailCodeView.as_view(), name='verify_email_code'),
+    path('api/user/update-active/', ChangeAlertView.as_view(), name='update-active'),
     path('api/user/change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('api/user/change-devicename/', ChangeDeviceNameView.as_view(), name='change-devicename'),
     path('api/generate-tokens/', GenerateTokensView.as_view(), name='generate_tokens'),

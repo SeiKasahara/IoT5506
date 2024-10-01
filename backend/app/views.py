@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 import random
 
@@ -15,7 +16,7 @@ from dotenv import load_dotenv
 from app.upload_handlers import CustomUploadHandler
 load_dotenv()
 
-from .models import User, Image, SensorData, Device
+from .models import EmailVerificationCode, User, Image, SensorData, Device
 from django.http import FileResponse, Http404, JsonResponse
 from .serializers import UserSerializer, ChangePasswordSerializer, ChangeDeviceNameSerializer
 
@@ -31,8 +32,9 @@ from rest_framework.decorators import authentication_classes, permission_classes
 from django.views.decorators.csrf import csrf_exempt
 from django.db import IntegrityError, transaction, models
 from django.core.cache import cache
+from django.core.mail import send_mail
 from django.contrib.auth import authenticate, login
-
+from django.utils import timezone
 
 ##########################################################################################
 # djangorestframework-simplejwt version 5.3.1 and before 
@@ -83,10 +85,90 @@ class UpdateUserEmailView(generics.GenericAPIView):
         user = self.request.user
         email = request.data.get('email')
         if email:
-            user.email = email
-            user.save()
-            return Response({'status': 'email updated'}, status=status.HTTP_200_OK)
+            code = str(random.randint(100000, 999999))
+            EmailVerificationCode.objects.create(user=user, code=code)
+            subject = 'Email Verification Code'
+            message = f"""
+            Dear User,
+
+            Thank you for registering with our Smart Fridge Program.
+
+            Your verification code is: {code}
+
+            Please enter this code in the verification field to complete your registration.
+
+            Best regards,
+            Smart Fridge Program Team
+
+            ---
+
+            This is an automated message, please do not reply.
+            """
+            from_email = 'your_email@example.com'
+            recipient_list = [email]
+            send_mail(
+                subject,
+                message,
+                from_email,
+                recipient_list,
+                fail_silently=False,
+            )
+
+            return Response({'status': 'verification code sent'}, status=status.HTTP_200_OK)
         return Response({'error': 'email not provided'}, status=status.HTTP_400_BAD_REQUEST)
+    
+class VerifyEmailCodeView(generics.GenericAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def post(self, request, *args, **kwargs):
+        user = self.request.user
+        code = request.data.get('code')
+        email = request.data.get('email')
+        if code and email:
+            try:
+                verification_code = EmailVerificationCode.objects.get(user=user, code=code)
+                if timezone.now() - verification_code.created_at > timedelta(minutes=10):
+                    return Response({'error': 'verification code expired'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                user.email = email
+                user.save()
+                verification_code.delete()
+                return Response({'status': 'email updated'}, status=status.HTTP_200_OK)
+            except EmailVerificationCode.DoesNotExist:
+                return Response({'error': 'invalid verification code'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'code or email not provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+class ChangeAlertView(generics.UpdateAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
+    
+    def get(self, request, *args, **kwargs):
+        user = self.get_object()
+        return Response({'mail_alert': user.mail_alert}, status=status.HTTP_200_OK)
+    
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            new_active_statement = serializer.validated_data.get("mail_alert")
+            if isinstance(new_active_statement, bool):
+                user.mail_alert = new_active_statement
+                user.save()
+                return Response({'status': 'mail_alert updated successfully'}, status=status.HTTP_200_OK)
+            else:
+                print(new_active_statement)
+                return Response({'error': 'Invalid mail_alert value'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class ChangePasswordView(generics.UpdateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]

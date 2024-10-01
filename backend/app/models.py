@@ -8,6 +8,7 @@ class User(AbstractUser):
     devicename = models.CharField(max_length=150, unique=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=100)
+    mail_alert = models.BooleanField(null=True, blank=True)
 
     groups = models.ManyToManyField(
         Group,
@@ -29,6 +30,11 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'devicename']
 
+
+class EmailVerificationCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class Device(models.Model):
     devicename = models.ForeignKey(User, to_field='devicename', on_delete=models.CASCADE)

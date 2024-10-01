@@ -1,13 +1,13 @@
 from rest_framework import serializers
 from .models import User
 from django.contrib.auth.hashers import make_password
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from django.contrib.auth.password_validation import validate_password
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', 'username', 'password', 'devicename']
+        fields = ['email', 'username', 'password', 'devicename', 'mail_alert']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):

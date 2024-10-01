@@ -33,7 +33,7 @@ export const Monitor = () => {
   }, []);
 
   return (
-    <div className="absolute left-[245px] w-[80%] h-auto flex flex-row items-start justify-start mt-[20px] bg-volt-background-light-mode rounded-lg container w-[900px] mx-auto p-4">
+    <div className="absolute left-[245px] w-[80%] h-auto flex flex-row items-start justify-start mt-[20px] bg-volt-background-light-mode rounded-lg container w-[1100px] mx-auto p-4">
     <div className="bg-gray-100 rounded-lg p-5 shadow-md w-full h-130 flex items-start justify-start ml-5">
       {imageUrl ? (
         <>
