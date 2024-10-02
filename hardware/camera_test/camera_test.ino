@@ -2,6 +2,7 @@
 #include <HTTPClient.h>
 #include "esp_camera.h"
 #include "time.h"
+#include <esp_heap_caps.h>
 
 //LED SETUP
 int led0 = D0;
@@ -10,6 +11,8 @@ int led1 = D1;
 //SD CARD SETUP
 #include "FS.h"
 #include "SD.h"
+#include <ArduinoJson.h>
+#include <Base64.h>
 #include "SPI.h"
 int imageCount = 1;                // File Counter
 // bool camera_sign = false;          // Check camera status
@@ -46,7 +49,7 @@ const char* serverName = "http://192.168.137.1:8000/backend/iot/upload_image/";
 #define EI_CAMERA_RAW_FRAME_BUFFER_COLS           320
 #define EI_CAMERA_RAW_FRAME_BUFFER_ROWS           240
 #define EI_CAMERA_FRAME_BYTE_SIZE                 3
-#define EI_CLASSIFIER_INPUT_WIDTH                 480
+#define EI_CLASSIFIER_INPUT_WIDTH                 640
 #define EI_CLASSIFIER_INPUT_HEIGHT                480
 
 /* Private variables ------------------------------------------------------- */
@@ -81,7 +84,7 @@ static camera_config_t camera_config = {
     .pixel_format = PIXFORMAT_JPEG, 
     .frame_size = FRAMESIZE_QVGA,  
 
-    .jpeg_quality = 12, //0-63 lower number means higher quality
+    .jpeg_quality = 5, //0-63 lower number means higher quality
     .fb_count = 1,       //if more than one, i2s runs in continuous mode. Use only with JPEG
     .fb_location = CAMERA_FB_IN_PSRAM,
     .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
@@ -288,10 +291,10 @@ void sendPhoto() {
         // Get the current timestamp
         String timestamp = getCurrentTimestamp();
         
-        // Append the timestamp as a parameter in the URL
-        String serverPath = String(serverName) + "?timestamp=" + timestamp;
+        // Set the server path
+        String serverPath = String(serverName);
         http.begin(serverPath);
-        http.addHeader("Content-Type", "image/jpeg");
+        http.addHeader("Content-Type", "application/json");
 
         // Read the latest image file
         char filename[32];
@@ -306,7 +309,7 @@ void sendPhoto() {
 
         // Read file content into buffer
         size_t fileSize = file.size();
-        uint8_t *fileBuffer = (uint8_t *)malloc(fileSize);
+        uint8_t *fileBuffer = (uint8_t *)heap_caps_malloc(fileSize, MALLOC_CAP_SPIRAM);
         if (fileBuffer == nullptr) {
             Serial.println("Failed to allocate memory for file buffer");
             file.close();
@@ -316,8 +319,21 @@ void sendPhoto() {
         file.read(fileBuffer, fileSize);
         file.close();
 
+        // Convert file buffer to base64
+        String imageBase64 = base64::encode(fileBuffer, fileSize);
+        free(fileBuffer);
+
+        // Create JSON object
+        StaticJsonDocument<1024> jsonDoc;
+        jsonDoc["timestamp"] = timestamp;
+        jsonDoc["image_data"] = imageBase64;
+        jsonDoc["deviceMAC"] = WiFi.macAddress();
+
+        String requestBody;
+        serializeJson(jsonDoc, requestBody);
+
         Serial.println("Sending photo...");
-        int httpResponseCode = http.POST(fileBuffer, fileSize);
+        int httpResponseCode = http.POST(requestBody);
 
         if (httpResponseCode > 0) {
             String response = http.getString();
@@ -329,7 +345,6 @@ void sendPhoto() {
         }
 
         http.end();
-        free(fileBuffer);
     } else {
         Serial.println("WiFi not connected");
     }
@@ -396,7 +411,7 @@ void loop() {
     // Turn the LED on
     turnOnLed();
 
-    snapshot_buf = (uint8_t*)malloc(EI_CAMERA_RAW_FRAME_BUFFER_COLS * EI_CAMERA_RAW_FRAME_BUFFER_ROWS * EI_CAMERA_FRAME_BYTE_SIZE);
+    snapshot_buf = (uint8_t*)heap_caps_malloc(EI_CAMERA_RAW_FRAME_BUFFER_COLS * EI_CAMERA_RAW_FRAME_BUFFER_ROWS * EI_CAMERA_FRAME_BYTE_SIZE, MALLOC_CAP_SPIRAM);
 
     // check if allocation was successful
     if(snapshot_buf == nullptr) {
@@ -413,6 +428,6 @@ void loop() {
     turnOffLed();
 
     sendPhoto();
-    free(snapshot_buf);
+    heap_caps_free(snapshot_buf);
     delay(60000);
 }

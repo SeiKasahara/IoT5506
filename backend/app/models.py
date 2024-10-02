@@ -9,6 +9,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=100)
     mail_alert = models.BooleanField(null=True, blank=True)
+    last_alert_sent = models.DateTimeField(null=True, blank=True)
 
     groups = models.ManyToManyField(
         Group,
@@ -30,6 +31,11 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'devicename']
 
+class Threshold(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    temperature = models.FloatField(null=True, blank=True)
+    humidity = models.FloatField(null=True, blank=True)
+    gas_concentration = models.FloatField(null=True, blank=True)
 
 class EmailVerificationCode(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

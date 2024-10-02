@@ -1,24 +1,23 @@
+import base64
 from datetime import timedelta
 import os
 import random
 
 import json
 import string
-import uuid
 
 from threading import Timer
 
 from django.conf import settings
 from pathlib import Path
 
-from django.shortcuts import render
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from .models import EmailVerificationCode, User, Image, SensorData, Device
+from .models import EmailVerificationCode, Threshold, User, Image, SensorData, Device
 from django.http import FileResponse, Http404, JsonResponse
-from .serializers import UserSerializer, ChangePasswordSerializer, ChangeDeviceNameSerializer
+from .serializers import ThresholdSerializer, UserSerializer, ChangePasswordSerializer, ChangeDeviceNameSerializer
 
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -104,7 +103,7 @@ class UpdateUserEmailView(generics.GenericAPIView):
 
             This is an automated message, please do not reply.
             """
-            from_email = 'your_email@example.com'
+            from_email = 'test@test.com'
             recipient_list = [email]
             send_mail(
                 subject,
@@ -220,6 +219,49 @@ class ChangeDeviceNameView(generics.UpdateAPIView):
             return Response({"detail": "Devicename updated successfully."}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class SetThresholdView(generics.UpdateAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ThresholdSerializer
+
+    def get_object(self):
+        threshold, created = Threshold.objects.get_or_create(user=self.request.user)
+        return threshold
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+    
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+def check_thresholds_and_alert(latest_data):
+    thresholds = Threshold.objects.all()
+    now = timezone.now()
+
+    for threshold in thresholds:
+        if (float(latest_data.sensor_temperature) > threshold.temperature or
+            float(latest_data.sensor_humidity) > threshold.humidity or
+            float(latest_data.sensor_gas) > threshold.gas_concentration):
+            
+            if threshold.user.mail_alert:
+                if not threshold.user.last_alert_sent or (now - threshold.user.last_alert_sent) > timedelta(minutes=30):
+                    send_alert_email(threshold.user.email, latest_data)
+                    threshold.user.last_alert_sent = now
+                    threshold.user.save()
+
+def send_alert_email(email, data):
+    subject = 'Alert: Threshold Exceeded'
+    message = f'Temperature: {data.sensor_temperature}°C\nHumidity: {data.sensor_humidity}%\nGas Concentration: {data.sensor_gas} ppm'
+    send_mail(subject, message, 'test@test.com', [email])
 
 @csrf_exempt
 def login_view(request):
@@ -271,34 +313,67 @@ def check_unique(request):
         return JsonResponse(data)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
 
-@csrf_exempt
-def upload_image(request):
-    if request.method == 'POST':
-        # Read the raw body of the request
-        image_data = request.body
-        
-        if image_data:
-            # Generate a unique filename
-            unique_filename = f"{uuid.uuid4()}.jpg"
-            
-            # Save the image data to the MEDIA_ROOT directory
-            path = default_storage.save(unique_filename, ContentFile(image_data))
-            
-            # Get the full path to the saved file
-            full_path = os.path.join(settings.MEDIA_ROOT, path)
-            
-            return JsonResponse({'message': 'File uploaded successfully', 'file_path': full_path})
-        else:
-            return JsonResponse({'message': 'No file found in request'}, status=400)
-    return JsonResponse({'message': 'Invalid request method'}, status=405)
+
 # Dictionary to keep track of timers for each device
 device_timers = {}
 
 def reset_device_status(device):
     device.is_fire_beetle_active = 0
     device.save()
+
+def reset_xiao_status(device):
+    device.is_xiao_active = 0
+    device.save()
+
+@csrf_exempt
+def upload_image(request):
+    if request.method == 'POST':
+        try:
+            # Parse the JSON body of the request
+            data = json.loads(request.body)
+            image_data = data.get('image_data')
+            timestamp = data.get('timestamp')
+            deviceMAC = data.get('deviceMAC')
+
+            device = Device.objects.filter(xiao_mac_address=deviceMAC).first()
+            if not device:
+                return JsonResponse({'status': 'failed', 'message': 'Unauthorized MAC address'}, status=403)
+            
+            device.is_xiao_active = 1
+            device.save()
+
+            # Cancel any existing timer for this device
+            if deviceMAC in device_timers:
+                device_timers[deviceMAC].cancel()
+
+            # Set a new timer to reset is_xiao_active to 0 after 2 minutes
+            timer = Timer(120, reset_xiao_status, [device])
+            timer.start()
+            device_timers[deviceMAC] = timer
+            
+            if image_data and timestamp:
+                # Decode the Base64 encoded image data
+                image_data = base64.b64decode(image_data)
+                
+                # Generate a filename using the timestamp
+                unique_filename = f"{timestamp}.jpg"
+                
+                # Save the image data to the MEDIA_ROOT directory
+                path = default_storage.save(unique_filename, ContentFile(image_data))
+                
+                # Get the full path to the saved file
+                full_path = os.path.join(settings.MEDIA_ROOT, path)
+                
+                return JsonResponse({'message': 'File uploaded successfully', 'file_path': full_path})
+            else:
+                return JsonResponse({'message': 'No image data or timestamp found in request'}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'message': 'Invalid JSON'}, status=400)
+        except base64.binascii.Error:
+            return JsonResponse({'message': 'Invalid Base64 data'}, status=400)
+    return JsonResponse({'message': 'Invalid request method'}, status=405)
+
 
 @csrf_exempt
 def sensor_data(request):
@@ -317,7 +392,7 @@ def sensor_data(request):
             if not device:
                 return JsonResponse({'status': 'failed', 'message': 'Unauthorized MAC address'}, status=403)
 
-            SensorData.objects.create(
+            latest_data = SensorData.objects.create(
                 sensor_humidity=sensor_humidity,
                 sensor_temperature=sensor_temperature,
                 sensor_gas=sensor_gas,
@@ -336,6 +411,8 @@ def sensor_data(request):
             timer = Timer(120, reset_device_status, [device])
             timer.start()
             device_timers[deviceMAC] = timer
+
+            check_thresholds_and_alert(latest_data)
 
             return JsonResponse({'status': 'success'})
         except json.JSONDecodeError:
@@ -557,19 +634,21 @@ class UserDeviceInfo(APIView):
 
         return Response(data)
 
+
 class LatestImageView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-            media_path = Path(settings.MEDIA_ROOT)
-            images = list(media_path.glob('*.jpg')) + list(media_path.glob('*.png'))  # Adjust the extensions as needed
-            latest_image = max(images, key=os.path.getctime) if images else None
+        media_path = Path(settings.MEDIA_ROOT)
+        images = list(media_path.glob('*.jpg')) + list(media_path.glob('*.png'))  # Adjust the extensions as needed
+        latest_image = max(images, key=os.path.getctime) if images else None
 
-            if latest_image:
-                try:
-                    return FileResponse(open(latest_image, 'rb'), content_type='image/jpeg')
-                except FileNotFoundError:
-                    raise Http404("Image not found")
-            else:
-                return JsonResponse({'error': 'No images found'}, status=404)
+        if latest_image:
+            try:
+                response = FileResponse(open(latest_image, 'rb'), content_type='image/jpeg')
+                return response
+            except FileNotFoundError:
+                raise Http404("Image not found")
+        else:
+            return JsonResponse({'error': 'No images found'}, status=404)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import Threshold, User
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from django.contrib.auth.password_validation import validate_password
@@ -31,3 +31,8 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class ChangeDeviceNameSerializer(serializers.Serializer):
     new_devicename = serializers.CharField(max_length=150)
+
+class ThresholdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Threshold
+        fields = ['temperature', 'humidity', 'gas_concentration']

@@ -5,20 +5,29 @@ const Sidebar = ({ activePage, setActivePage }) => {
   const [homeVariant, setHomeVariant] = useState("menu");
   const [dashboardVariant, setDashboardVariant] = useState("menu");
   const [cameraVariant, setCameraVariant] = useState('menu');
+  const [subVariant, setSubVariant] = useState('menu')
 
   useEffect(() => {
     if (activePage === 'Home') {
       setHomeVariant('reverse_menu');
       setDashboardVariant('menu');
       setCameraVariant('menu');
+      setSubVariant('menu');
     } else if (activePage === 'Dashboard') {
       setHomeVariant('menu');
       setDashboardVariant('reverse_menu');
       setCameraVariant('menu');
+      setSubVariant('menu');
     } else if (activePage === 'Camera') {
       setCameraVariant('reverse_menu');
       setHomeVariant('menu');
       setDashboardVariant('menu');
+      setSubVariant('menu');
+    } else if (activePage === 'Subscription') {
+      setSubVariant('reverse_menu');
+      setHomeVariant('menu');
+      setDashboardVariant('menu');
+      setCameraVariant('menu');
     }
   }, [activePage]);
 
@@ -43,6 +52,11 @@ const Sidebar = ({ activePage, setActivePage }) => {
         <li className="m-0">
           <Button size='sidebarbtn' variant={cameraVariant} onClick={() => setActivePage('Camera')}>
             Monitor Camera
+          </Button>
+        </li>
+        <li className="m-0">
+          <Button size='sidebarbtn' variant={subVariant} onClick={() => setActivePage('Subscription')}>
+            Subscription
           </Button>
         </li>
       </ul>

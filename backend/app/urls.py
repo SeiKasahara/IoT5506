@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ChangeAlertView, LatestImageView, UserDeviceInfo, UserRegistrationView, VerifyEmailCodeView, check_unique, sensor_data, upload_image, login_view, SensorDataGet, xiao_verify_token, poll_xiao_verify, poll_firebeetle_verify, firebeetle_verify_token, GenerateTokensView, ChangeDeviceNameView,  UserDetailView, UpdateUserEmailView, ChangePasswordView
+from .views import ChangeAlertView, LatestImageView, SetThresholdView, UserDeviceInfo, UserRegistrationView, VerifyEmailCodeView, check_unique, sensor_data, upload_image, login_view, SensorDataGet, xiao_verify_token, poll_xiao_verify, poll_firebeetle_verify, firebeetle_verify_token, GenerateTokensView, ChangeDeviceNameView,  UserDetailView, UpdateUserEmailView, ChangePasswordView
 
 
 urlpatterns = [
@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/user/update-active/', ChangeAlertView.as_view(), name='update-active'),
     path('api/user/change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('api/user/change-devicename/', ChangeDeviceNameView.as_view(), name='change-devicename'),
+    path('api/user/set-threshold/', SetThresholdView.as_view(), name='set-threshold'),
     path('api/generate-tokens/', GenerateTokensView.as_view(), name='generate_tokens'),
     path('iot/XIAOESP32Camera-verify/', xiao_verify_token, name="xiao-verify"),
     path('iot/FireBeetleESP32-verify/', firebeetle_verify_token, name="firebeetle-verify"),

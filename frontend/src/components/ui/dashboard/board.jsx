@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import SensorChart from './SensorChart';
-import { Button } from '../button';
 
 function Board() {
   const [activeSensor, setActiveSensor] = useState("");
@@ -56,10 +55,7 @@ function Board() {
           </div>
         )}
       </div>
-      <div className='absolute top-[50%] left-[245px] w-[80%] h-auto flex flex-row items-start justify-start mt-[20px] bg-volt-background-light-mode rounded-lg container w-[1000px] mx-auto p-4' >
-        Custom Temperature Alert Subscription:
-      </div>
-      </div>
+    </div>
   );
 }
 

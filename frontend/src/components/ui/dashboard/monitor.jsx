@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../libs/api";
-import EXIF from "exif-js";
-
 const TIME = 60000; // Polling interval in milliseconds (e.g., 60 seconds)
 
 export const Monitor = () => {
   const [imageUrl, setImageUrl] = useState("");
   const [timestamp, setTimestamp] = useState("");
-
   const fetchLatestImage = async () => {
     try {
-      const response = await api.get("/api/latest-image/", {
+      const userId = localStorage.getItem('userId'); // Assuming user ID is stored in local storage
+      const response = await api.get(`/api/latest-image/${userId}`, {
         responseType: 'blob', // Important for handling binary data
         headers: {
           'Content-Type': 'application/json',
@@ -19,12 +17,29 @@ export const Monitor = () => {
       });
       const imageBlob = response.data;
       const imageObjectURL = URL.createObjectURL(imageBlob);
+      const now = new Date();
+  
+      const year = now.getFullYear();
+      const month = ('0' + (now.getMonth() + 1)).slice(-2);
+      const day = ('0' + now.getDate()).slice(-2);
+      const hours = ('0' + now.getHours()).slice(-2);
+      const minutes = ('0' + now.getMinutes()).slice(-2);
+      const seconds = ('0' + now.getSeconds()).slice(-2);
+  
+      const formattedTime = year + "/" + month + "/" + day + " " + hours + ":" + minutes + ":" + seconds;
+  
+      setTimestamp(formattedTime);
       setImageUrl(imageObjectURL);
-      //Time stamp should get in the backend ///working
     } catch (error) {
-      console.error("Error fetching the latest image:", error);
+      if (error.response && error.response.status === 403) {
+        setImageUrl("");
+        console.error("Access forbidden: You do not have permission to access.");
+      } else {
+        console.error("Error fetching the latest image:", error);
+      }
     }
   };
+  
 
   useEffect(() => {
     fetchLatestImage();
@@ -42,12 +57,12 @@ export const Monitor = () => {
           alt="Latest" 
           className="w-[640px] h-[480px] object-cover" 
         />
-        <p className="text-sm text-gray-600 ml-10">Timestamp: {timestamp}</p>
+        <p className="text-sm text-gray-600 ml-10">Time: {timestamp}</p>
         </>
       ) : (
         <p>No image available</p>
       )}
     </div>
     </div>
-  );  
+  );
 };

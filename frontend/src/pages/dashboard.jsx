@@ -6,6 +6,7 @@ import '../styles/dashboard.css';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import TopBar from "../components/ui/dashboard/topbar.jsx";
 import { Monitor } from "../components/ui/dashboard/monitor.jsx";
+import CustomAlert from "../components/ui/dashboard/subscription.jsx";
 
 const Dashboard = () => {
     const [activePage, setActivePage] = useState("Home");
@@ -29,6 +30,7 @@ const Dashboard = () => {
                     {activePage === 'Home' && <UserInformation />}
                     {activePage === 'Dashboard' && <Board />}
                     {activePage === 'Camera' && <Monitor/>}
+                    {activePage === 'Subscription' && <CustomAlert/>}
                   </div>
                 </CSSTransition>
               </TransitionGroup>
