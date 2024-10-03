@@ -8,6 +8,7 @@ import string
 
 from threading import Timer
 
+
 from django.conf import settings
 from pathlib import Path
 
@@ -15,7 +16,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from .models import EmailVerificationCode, Threshold, User, Image, SensorData, Device
+import cv2
+import torch
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torchvision import transforms
+from torchvision import models as tmodels
+
+
+from .models import EmailVerificationCode, ImagePrediction, Threshold, User, Image, SensorData, Device
 from django.http import FileResponse, Http404, JsonResponse
 from .serializers import ThresholdSerializer, UserSerializer, ChangePasswordSerializer, ChangeDeviceNameSerializer
 
@@ -263,6 +273,37 @@ def send_alert_email(email, data):
     message = f'Temperature: {data.sensor_temperature}°C\nHumidity: {data.sensor_humidity}%\nGas Concentration: {data.sensor_gas} ppm'
     send_mail(subject, message, 'test@test.com', [email])
 
+def check_freshness(latest_data):
+    all_predictions = ImagePrediction.objects.all()
+    now = timezone.now()
+
+    for elem in all_predictions:
+        if elem.freshness == 'Spoiled' and elem.device_id:
+            device = Device.objects.filter(id=elem.device_id).first()
+            if device:
+                user = User.objects.filter(devicename=device.devicename).first()
+                if user and user.mail_alert:
+                    #if not user.last_alert_sent or (now - user.last_alert_sent) > timedelta(minutes=30):
+                    send_alert_email_food(user.email, latest_data)
+                        #user.last_alert_sent = now
+                    #user.save()
+
+def send_alert_email_food(email):
+    subject = 'Alert: Food decayed'
+    message = f"""Dear User,
+
+            Please check your food status, it's almost spoiled.
+
+            (The model has accuracy to identify freshness, the wrong information may provided)
+
+            Best regards,
+            Smart Fridge Program Team
+
+            ---
+
+            This is an automated message, please do not reply."""
+    send_mail(subject, message, 'test@test.com', [email])
+
 @csrf_exempt
 def login_view(request):
     if request.method == 'POST':
@@ -326,6 +367,130 @@ def reset_xiao_status(device):
     device.is_xiao_active = 0
     device.save()
 
+#####################
+# MACHINE LEARNING #
+#####################
+
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.alpha = 0.7
+
+        self.base = tmodels.resnet18()
+        for param in list(self.base.parameters())[:-15]:
+            param.requires_grad = False
+                    
+        self.base.classifier = nn.Sequential()
+        self.base.fc = nn.Sequential()
+            
+        self.block1 = nn.Sequential(
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, 128),
+        )
+        
+        
+        self.block2 = nn.Sequential(
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(128, 9)
+        )
+        
+        self.block3 = nn.Sequential(
+            nn.Linear(128, 32),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(32, 2)
+        )
+    
+    def forward(self, x):
+        x = self.base(x)
+        x = self.block1(x)
+        y1, y2 = self.block2(x), self.block3(x)
+        return y1, y2
+
+DEVICE = "cpu"
+MODEL = Model()
+MODEL_PATH = os.path.join(settings.MEDIA_ROOT, 'parameters/FreshnessDetector.pt')
+MODEL.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device(DEVICE)), strict=True)
+MODEL.to(DEVICE)
+MODEL.eval()
+
+def image_transform(img, p=0.5, training=True):
+    if training:
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize((224, 224)),
+            transforms.RandomHorizontalFlip(p=p),
+            transforms.GaussianBlur(3, sigma=(0.1, 2.0)),
+            transforms.RandomAdjustSharpness(3, p=p),
+            transforms.Normalize(mean=0, std=1)
+        ])
+    else:
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize((224, 224)),
+            transforms.Normalize(mean=0, std=1)
+        ])
+    return transform(img)
+
+def draw_label(image, text, pos, bg_color):
+    font_face = cv2.FONT_HERSHEY_SIMPLEX
+    scale = 0.6
+    color = (255, 255, 255)
+    thickness = 1
+    margin = 2
+    size, baseline = cv2.getTextSize(text, font_face, scale, thickness)
+    end_x = pos + size + margin
+    end_y = pos + size + margin
+
+    cv2.rectangle(image, pos, (end_x, end_y), bg_color, cv2.FILLED)
+    cv2.putText(image, text, (pos, pos + size), font_face, scale, color, thickness, cv2.LINE_AA)
+
+def predict(image_path, model, device):
+    # Read and preprocess the image
+    img = cv2.imread(image_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = cv2.resize(img, (224, 224))
+    img_as_tensor = image_transform(img, training=False)
+    
+    # Model inference
+    model.eval()
+    with torch.no_grad():
+        img_as_tensor = img_as_tensor.unsqueeze(0).to(device)
+        out1, out2 = model(img_as_tensor)
+    
+    # Calculate probabilities
+    softmax = nn.Softmax(dim=1)
+    fruit_probs = softmax(out1)
+    fresh_probs = softmax(out2)
+    
+    # Get prediction results
+    fruit_class = torch.argmax(fruit_probs, dim=1).item()
+    fresh_class = torch.argmax(fresh_probs, dim=1).item()
+    
+    # Define class names
+    fruit_classes = ['apples', 'banana', 'bitterground', 'capsicum', 'cucumber', 'okra', 'oranges', 'potato', 'tomato']
+    fresh_classes = ['Fresh', 'Spoiled']
+    
+    # Get class names and freshness percentage
+    fruit_name = fruit_classes[fruit_class]
+    fresh_name = fresh_classes[fresh_class]
+    fresh_percent = fresh_probs[0, fresh_class].item() * 100  # Ensure correct indexing
+    
+    # Draw rectangle and labels on the image
+    #height, width, _ = img.shape  # Access individual dimensions
+    #cv2.rectangle(img, (50, 50), (width - 50, height - 50), (0, 255, 0), 2)
+    #draw_label(img, f'{fruit_name}: {fresh_name} ({fresh_percent:.2f}%)', (60, 60), (0, 255, 0))
+
+    #output_path = 'output_image.jpg'
+    #full_path = os.path.join('path_to_media_root', output_path)  # Replace 'path_to_media_root' with your actual path
+    #cv2.imwrite(full_path, img)
+    return fresh_percent, fruit_name, fresh_name
+
+
 @csrf_exempt
 def upload_image(request):
     if request.method == 'POST':
@@ -336,10 +501,11 @@ def upload_image(request):
             timestamp = data.get('timestamp')
             deviceMAC = data.get('deviceMAC')
 
+            # Retrieve device based on MAC address
             device = Device.objects.filter(xiao_mac_address=deviceMAC).first()
             if not device:
                 return JsonResponse({'status': 'failed', 'message': 'Unauthorized MAC address'}, status=403)
-            
+
             device.is_xiao_active = 1
             device.save()
 
@@ -351,7 +517,7 @@ def upload_image(request):
             timer = Timer(120, reset_xiao_status, [device])
             timer.start()
             device_timers[deviceMAC] = timer
-            
+
             if image_data and timestamp:
                 # Decode the Base64 encoded image data
                 image_data = base64.b64decode(image_data)
@@ -364,8 +530,23 @@ def upload_image(request):
                 
                 # Get the full path to the saved file
                 full_path = os.path.join(settings.MEDIA_ROOT, path)
+
+                # Call your prediction function to make predictions on the saved image
+                prediction, food, freshness  = predict(full_path, MODEL, DEVICE)
                 
-                return JsonResponse({'message': 'File uploaded successfully', 'file_path': full_path})
+                # Store the image path, prediction, and timestamp in the ImagePrediction model
+                latest_data = ImagePrediction.objects.create(
+                    device=device,
+                    image_path=path,  # Save relative path to the image
+                    prediction=prediction,
+                    timestamp=timezone.now(),  # or use the provided timestamp
+                    food=food,
+                    freshness=freshness
+                )
+
+                check_freshness(latest_data)
+
+                return JsonResponse({'message': 'File uploaded successfully', 'file_path': full_path, 'prediction': prediction})
             else:
                 return JsonResponse({'message': 'No image data or timestamp found in request'}, status=400)
         except json.JSONDecodeError:
@@ -640,15 +821,29 @@ class LatestImageView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        media_path = Path(settings.MEDIA_ROOT)
-        images = list(media_path.glob('*.jpg')) + list(media_path.glob('*.png'))  # Adjust the extensions as needed
-        latest_image = max(images, key=os.path.getctime) if images else None
+        try:
+            latest_prediction = ImagePrediction.objects.latest('id')
+            latest_image_path = latest_prediction.image_path
+            prediction_value = latest_prediction.prediction
+            timestamp_value = latest_prediction.timestamp
+            food_value = latest_prediction.food
+            freshness_value = latest_prediction.freshness
 
-        if latest_image:
-            try:
-                response = FileResponse(open(latest_image, 'rb'), content_type='image/jpeg')
-                return response
-            except FileNotFoundError:
-                raise Http404("Image not found")
-        else:
+            media_path = Path(settings.MEDIA_ROOT) / latest_image_path
+
+            if media_path.exists():
+                with open(media_path, 'rb') as image_file:
+                    image_data = image_file.read()
+                    encoded_image = base64.b64encode(image_data).decode('utf-8')
+                    response_data = {
+                        'image': encoded_image,
+                        'prediction': prediction_value,
+                        'timestamp': timestamp_value.isoformat(),
+                        'food_v': food_value,
+                        'freshness_v': freshness_value
+                    }
+                    return JsonResponse(response_data)
+            else:
+                return JsonResponse({'error': 'Image not found'}, status=404)
+        except ImagePrediction.DoesNotExist:
             return JsonResponse({'error': 'No images found'}, status=404)

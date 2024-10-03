@@ -5,31 +5,32 @@ const TIME = 60000; // Polling interval in milliseconds (e.g., 60 seconds)
 export const Monitor = () => {
   const [imageUrl, setImageUrl] = useState("");
   const [timestamp, setTimestamp] = useState("");
+  const [prediction, setPrediction] = useState("");
+  const [food, setFood] = useState("");
+  const [freshness, setFreshness] = useState("");
+
   const fetchLatestImage = async () => {
     try {
-      const userId = localStorage.getItem('userId'); // Assuming user ID is stored in local storage
-      const response = await api.get(`/api/latest-image/${userId}`, {
-        responseType: 'blob', // Important for handling binary data
+      const response = await api.get(`/api/latest-image/`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
       });
-      const imageBlob = response.data;
+  
+      const { image, prediction, timestamp, food_v, freshness_v } = response.data;
+      const imageBlob = await (await fetch(`data:image/jpeg;base64,${image}`)).blob();
       const imageObjectURL = URL.createObjectURL(imageBlob);
-      const now = new Date();
-  
-      const year = now.getFullYear();
-      const month = ('0' + (now.getMonth() + 1)).slice(-2);
-      const day = ('0' + now.getDate()).slice(-2);
-      const hours = ('0' + now.getHours()).slice(-2);
-      const minutes = ('0' + now.getMinutes()).slice(-2);
-      const seconds = ('0' + now.getSeconds()).slice(-2);
-  
-      const formattedTime = year + "/" + month + "/" + day + " " + hours + ":" + minutes + ":" + seconds;
-  
-      setTimestamp(formattedTime);
+      const date = new Date(timestamp);
+      const formattedDate = `${('0' + (date.getMonth() + 1)).slice(-2)}/${('0' + date.getDate()).slice(-2)}/${date.getFullYear().toString().slice(-2)}`;
+      const formattedTime = `${('0' + date.getHours()).slice(-2)}:${('0' + date.getMinutes()).slice(-2)}:${('0' + date.getSeconds()).slice(-2)}`;
+      const formattedTimestamp = `${formattedDate} ${formattedTime}`;
+
+      setTimestamp(formattedTimestamp);
       setImageUrl(imageObjectURL);
+      setPrediction(prediction);
+      setFood(food_v);
+      setFreshness(freshness_v);
     } catch (error) {
       if (error.response && error.response.status === 403) {
         setImageUrl("");
@@ -57,7 +58,13 @@ export const Monitor = () => {
           alt="Latest" 
           className="w-[640px] h-[480px] object-cover" 
         />
+        <div className="flex-col items-start">
         <p className="text-sm text-gray-600 ml-10">Time: {timestamp}</p>
+        <div className="separator h-0.5 w-full mt-2 mb-5 bg-gray-300 mx-1 self-center"></div>
+          <p className="text-sm text-gray-600 ml-10">Accuracy: {prediction} %</p>
+          <p className="text-sm text-gray-600 ml-10">Food: {food} </p>
+          <p className={`text-sm ${freshness === 'Fresh' ? 'text-green-600' : 'text-red-600'} ml-10`}>Freshness: {freshness} </p>
+        </div>
         </>
       ) : (
         <p>No image available</p>

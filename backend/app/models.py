@@ -66,3 +66,14 @@ class Image(models.Model):
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+class ImagePrediction(models.Model):
+    device = models.ForeignKey(Device, on_delete=models.CASCADE)
+    image_path = models.CharField(max_length=255)
+    prediction = models.CharField(max_length=255)
+    timestamp = models.DateTimeField()
+    food = models.CharField(max_length=255, null=True, blank=True)
+    freshness = models.CharField(max_length=255, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.device} - {self.timestamp}"
+
