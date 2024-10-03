@@ -21,6 +21,8 @@ RUN poetry install
 
 COPY ./backend ./
 
+RUN mkdir -p /var/log/accesslogs && chmod -R 755 /var/log/accesslogs
+
 RUN chmod +x /entrypoint.sh
 
 CMD ["/entrypoint.sh"]
