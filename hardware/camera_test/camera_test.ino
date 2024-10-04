@@ -24,7 +24,7 @@ const char* ssid = "Touhou";
 const char* password = "1154Q/g0";
 
 // Server URL
-const char* serverName = "http://192.168.137.1:8000/backend/iot/upload_image/";
+const char* serverName = "http://20.6.131.79:8000/backend/iot/upload_image/";
 
 #define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
 #define PWDN_GPIO_NUM     -1
