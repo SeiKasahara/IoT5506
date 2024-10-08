@@ -104,7 +104,7 @@ class UpdateUserEmailView(generics.GenericAPIView):
 
             Your verification code is: {code}
 
-            Please enter this code in the verification field to complete your registration.
+            Please enter this code in the verification field to complete your email updation.
 
             Best regards,
             Smart Fridge Program Team
@@ -254,7 +254,11 @@ class SetThresholdView(generics.UpdateAPIView):
         return Response(serializer.data)
 
 def check_thresholds_and_alert(latest_data):
-    thresholds = Threshold.objects.all()
+    device = Device.objects.get(fire_beetle_mac_address=latest_data.deviceMAC)
+    user = device.devicename  # Get the user associated with the device
+
+    # Get all thresholds for this user
+    thresholds = Threshold.objects.filter(user=user)
     now = timezone.now()
 
     for threshold in thresholds:

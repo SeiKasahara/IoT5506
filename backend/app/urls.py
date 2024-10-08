@@ -1,6 +1,8 @@
-from django.urls import path
+from django.urls import path, include
 from .views import ChangeAlertView, LatestImageView, SetThresholdView, UserDeviceInfo, UserRegistrationView, VerifyEmailCodeView, check_unique, sensor_data, upload_image, login_view, SensorDataGet, xiao_verify_token, poll_xiao_verify, poll_firebeetle_verify, firebeetle_verify_token, GenerateTokensView, ChangeDeviceNameView,  UserDetailView, UpdateUserEmailView, ChangePasswordView
-
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from rest_framework import permissions
 
 urlpatterns = [
     path('signup/', UserRegistrationView.as_view(), name='signup'),
