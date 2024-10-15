@@ -20,8 +20,8 @@ bool sd_sign = true;              // Check sd status
 bool save_to_sdcard = true; //true: save image to sdcard
 
 // Wi-Fi credentials
-const char* ssid = "Touhou";
-const char* password = "1154Q/g0";
+const char* ssid = "Pixel_2460";
+const char* password = "1a2b3c4d";
 
 // Server URL
 const char* serverName = "http://20.6.131.79:8000/backend/iot/upload_image/";
