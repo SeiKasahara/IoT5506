@@ -191,7 +191,7 @@ const long httpInterval = 20000;
 
 //////////////////////////////////////////////////////////////////
 // Temperature threshold
-float tempThreshold = 30.0;
+float tempThreshold = 7.0;
 bool tempExceeded = false;
 
 void printBME280Data

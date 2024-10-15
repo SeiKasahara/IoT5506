@@ -827,6 +827,11 @@ class LatestImageView(APIView):
     def get(self, request):
         try:
             latest_prediction = ImagePrediction.objects.latest('id')
+            device = latest_prediction.device
+            
+            # Check if the user associated with the JWT token is the same as the user in the Device's devicename
+            if device.devicename != request.user:
+                return JsonResponse({'error': 'Unauthorized access'}, status=403)
             latest_image_path = latest_prediction.image_path
             prediction_value = latest_prediction.prediction
             timestamp_value = latest_prediction.timestamp
