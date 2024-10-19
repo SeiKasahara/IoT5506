@@ -6,13 +6,19 @@ This is an out-of-the-box open-source IoT platform specifically designed for Fir
 
 ### Key Features
 
-- Designed for Firebeetle and Xiao ESP32S3 hardware
-- CI/CD automation using Docker
-- Sqlite3 database management (with option to rebuild for MongoDB)
-- Nginx port forwarding configuration
-- Cloud server integration support
-- SMTP server support
-- Arduino-compatible hardware code upload
+- ![Firebeetle & Xiao ESP32S3](https://img.shields.io/badge/Hardware-Firebeetle%20%26%20Xiao%20ESP32S3-blue?style=flat-square&logo=arduino) Designed for Firebeetle and Xiao ESP32S3 hardware
+
+- ![Docker](https://img.shields.io/badge/CI%2FCD-Docker-blue?style=flat-square&logo=docker) CI/CD automation using Docker
+
+- ![SQLite](https://img.shields.io/badge/Database-SQLite-blue?style=flat-square&logo=sqlite) Sqlite3 database management (with option to rebuild for MongoDB)
+
+- ![Nginx](https://img.shields.io/badge/Web%20Server-Nginx-green?style=flat-square&logo=nginx) Nginx port forwarding configuration
+
+- ![Cloud](https://img.shields.io/badge/Integration-Cloud%20Server-blue?style=flat-square&logo=icloud) Cloud server integration support
+
+- ![SMTP](https://img.shields.io/badge/Email-SMTP-red?style=flat-square&logo=minutemailer) SMTP server support
+
+- ![Arduino](https://img.shields.io/badge/Upload-Arduino%20Compatible-teal?style=flat-square&logo=arduino) Arduino-compatible hardware code upload
 
 ## Getting Started
 
