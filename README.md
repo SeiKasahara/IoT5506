@@ -143,7 +143,7 @@ We welcome community contributions! If you want to contribute to this open-sourc
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+see the [LICENSE](LICENSE) file for details.
 
 ## Additional Information
 
