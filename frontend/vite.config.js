@@ -31,7 +31,6 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           main: resolve(__dirname, 'index.html'),
-          signup: resolve(__dirname, 'pages/signup/index.html'),
         },
       },
     },

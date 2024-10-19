@@ -33,9 +33,9 @@ SCK (Serial Clock)  ->  A5 on Uno/Pro-Mini, 21 on Mega2560/Due, 3 Leonardo/Pro-M
 float temp(NAN), hum(NAN), pres(NAN), CH4;
 
 // Backend
-#define SSID "Touhou"
-#define PW "1154Q/g0"
-#define SERVER_IP "192.168.137.1"
+#define SSID "Your SSID"
+#define PW "Password"
+#define SERVER_IP "20.6.131.79"
 #define SERVER_PORT "8000"
 #define SERVER_PATH "/backend/iot/sensor_data/"
 
@@ -191,7 +191,7 @@ const long httpInterval = 20000;
 
 //////////////////////////////////////////////////////////////////
 // Temperature threshold
-float tempThreshold = 30.0;
+float tempThreshold = 8.0;
 bool tempExceeded = false;
 
 void printBME280Data

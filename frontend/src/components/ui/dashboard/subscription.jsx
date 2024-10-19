@@ -123,9 +123,9 @@ const CustomAlert = () => {
         </div>
         <div className='mt-6'>
           <p className='text-xl font-semibold mb-2'>Current Subscription Values:</p>
-          <h3 className='text-green-700'>Temperature: {displayGas}°C</h3>
+          <h3 className='text-green-700'>Temperature: {displayTemp}°C</h3>
           <h3 className='text-blue-700'>Humidity: {displayHumi}%</h3>
-          <h3 className='text-red-700'>Gas Concentration: {displayTemp} ppm</h3>
+          <h3 className='text-red-700'>Gas Concentration: {displayGas} ppm</h3>
         </div>
         <Button
           className={`px-4 py-2 rounded-md ${submitVariant === 'inactive' ? 'bg-gray-400' : 'bg-blue-500 text-white'}`}

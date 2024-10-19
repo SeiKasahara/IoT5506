@@ -34,7 +34,7 @@ const Sidebar = ({ activePage, setActivePage }) => {
   return (
     <nav className="sidebar fixed left-5 top-5 bottom-5 w-52 bg-volt-background-light-mode shadow-md flex flex-col rounded-lg transition-all duration-300">
       <div className="logo-container flex justify-center my-5 flex-col items-center">
-        <img src="/public/logo.svg" alt="Logo" className="logo w-24 h-auto" />
+        <img src="/public/Logo.svg" alt="Logo" className="logo w-24 h-auto" />
         <div className="text-sm mt-2">Smart Fridge 0.1a</div>
       </div>
       <div className="separator h-0.5 w-40 bg-gray-300 mx-2 self-center"></div>

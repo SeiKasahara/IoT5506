@@ -17,12 +17,12 @@ echo "APP_ENV: ${APP_ENV}"
 # pwd
 # ls -al
 
-# echo "  "
-# echo "======= Env Vars (Debug) ========================================================================================"
-# if [ "${APP_ENV^^}" != "PRODUCTION" ]; then
-#   # Only print environment vars in non-prod environments to prevent sensitive variables being sent to logging system
-#   printenv
-# fi
+echo "  "
+echo "======= Env Vars (Debug) ========================================================================================"
+if [ "${APP_ENV^^}" != "PRODUCTION" ]; then
+   # Only print environment vars in non-prod environments to prevent sensitive variables being sent to logging system
+   printenv
+fi
 
 # echo "  "
 # echo "======= Linux version (Debug) ==================================================================================="
@@ -55,4 +55,11 @@ if [ "${APP_ENV^^}" = "DEVELOPMENT" ]; then
     echo "======= Starting inbuilt nextjs webserver ==================================================================="
     npm run dev
     exit
+else
+    if [ "${APP_ENV^^}" = "PRODUCTION" ]; then
+        npm install
+        echo " "
+        echo "======= Starting build nextjs webserver ==================================================================="
+        npm run preview
+    fi
 fi
