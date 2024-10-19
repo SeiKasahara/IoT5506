@@ -4,6 +4,13 @@
 #include "time.h"
 #include <esp_heap_caps.h>
 
+// Backend
+#define SSID "Your SSID"
+#define PW "Password"
+#define SERVER_IP "20.6.131.79"
+#define SERVER_PORT "8000"
+#define SERVER_PATH "/backend/iot/upload_image/"
+
 //LED SETUP
 int led0 = D0;
 int led1 = D1;
@@ -24,7 +31,7 @@ const char* ssid = "Pixel_2460";
 const char* password = "1a2b3c4d";
 
 // Server URL
-const char* serverName = "http://20.6.131.79:8000/backend/iot/upload_image/";
+const char* serverName = "http://" SERVER_IP ":" SERVER_PORT SERVER_PATH;
 
 #define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
 #define PWDN_GPIO_NUM     -1
