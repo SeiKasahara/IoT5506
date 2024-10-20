@@ -1,13 +1,6 @@
 /*
-Environment_Calculations.ino
-
 This code shows how to record data from the BME280 environmental sensor
-and perform various calculations.
-
-GNU General Public License
-
-Written: Dec 30 2015.
-Last Updated: Oct 07 2017.
+and perform various calculations. Send data to Azure and Blynk server.
 
 Connecting the BME280 Sensor:
 Sensor              ->  Board
@@ -56,7 +49,6 @@ const char* serverName = "http://" SERVER_IP ":" SERVER_PORT SERVER_PATH;
 // float referencePressure = 1018.6;  // hPa local QFF (official meteor-station reading)
 // float outdoorTemp = 4.7;           // °C  measured local outdoor temp.
 // float barometerAltitude = 1650.3;  // meters ... map readings + barometer position
-
 
 BME280I2C::Settings settings(
    BME280::OSR_X1,
@@ -130,11 +122,6 @@ void setup()
      default:
        Serial.println("Found UNKNOWN sensor! Error!");
   }
-  // Serial.print("Assumed outdoor temperature: "); Serial.print(outdoorTemp);
-  // Serial.print("°C\nAssumed reduced sea level Pressure: "); Serial.print(referencePressure);
-  // Serial.print("hPa\nAssumed barometer altitude: "); Serial.print(barometerAltitude);
-  // Serial.println("m\n***************************************");
-
   mq9setup();
 
   //BLYNK SETUP
@@ -217,6 +204,7 @@ void printBME280Data
   //  client->println(String(presUnit == BME280::PresUnit_hPa ? "hPa" : "Pa")); // expected hPa and Pa only
    client->println(" Pa");
 
+  //Virtual Write to Blynk server
    Blynk.virtualWrite(V1, temp); 
    Blynk.virtualWrite(V2, hum); 
    Blynk.virtualWrite(V3, pres); 
@@ -238,39 +226,6 @@ void printBME280Data
     tempExceeded = false;
   }
    
-  //  EnvironmentCalculations::AltitudeUnit envAltUnit  =  EnvironmentCalculations::AltitudeUnit_Meters;
-  //  EnvironmentCalculations::TempUnit     envTempUnit =  EnvironmentCalculations::TempUnit_Celsius;
-
-  //  /// To get correct local altitude/height (QNE) the reference Pressure
-  //  ///    should be taken from meteorologic messages (QNH or QFF)
-  //  float altitude = EnvironmentCalculations::Altitude(pres, envAltUnit, referencePressure, outdoorTemp, envTempUnit);
-
-  //  float dewPoint = EnvironmentCalculations::DewPoint(temp, hum, envTempUnit);
-
-  //  /// To get correct seaLevel pressure (QNH, QFF)
-  //  ///    the altitude value should be independent on measured pressure.
-  //  /// It is necessary to use fixed altitude point e.g. the altitude of barometer read in a map
-  //  float seaLevel = EnvironmentCalculations::EquivalentSeaLevelPressure(barometerAltitude, temp, pres, envAltUnit, envTempUnit);
-
-  //  float absHum = EnvironmentCalculations::AbsoluteHumidity(temp, hum, envTempUnit);
-
-  //  client->print("\t\tAltitude: ");
-  //  client->print(altitude);
-  //  client->print((envAltUnit == EnvironmentCalculations::AltitudeUnit_Meters ? "m" : "ft"));
-  //  client->print("\t\tDew point: ");
-  //  client->print(dewPoint);
-  //  client->print("°"+ String(envTempUnit == EnvironmentCalculations::TempUnit_Celsius ? "C" :"F"));
-  //  client->print("\t\tEquivalent Sea Level Pressure: ");
-  //  client->print(seaLevel);
-  //  client->print(String( presUnit == BME280::PresUnit_hPa ? "hPa" :"Pa")); // expected hPa and Pa only
-
-  //  client->print("\t\tHeat Index: ");
-  //  float heatIndex = EnvironmentCalculations::HeatIndex(temp, hum, envTempUnit);
-  //  client->print(heatIndex);
-  //  client->print("°"+ String(envTempUnit == EnvironmentCalculations::TempUnit_Celsius ? "C" :"F"));
-
-  //  client->print("\t\tAbsolute Humidity: ");
-  //  client->println(absHum);
   return;
 }
 
@@ -293,30 +248,28 @@ void printMQ9Data(){
   MQ9.setA(599.65); MQ9.setB(-2.244); // Configure the equation to to calculate LPG concentration
   float CO = MQ9.readSensor(); // Sensor will read PPM concentration using the model, a and b values set previously or from the setup
 
+  //Print all the gas censor
   Serial.print("LPG: "); Serial.print(LPG);
   Serial.print("    CH4: "); Serial.print(CH4);
   Serial.print("    CO: "); Serial.println(CO); 
 
+  //Virtual write methane gas
   Blynk.virtualWrite(V4, CH4);
-  // delay(500); //Sampling frequency
   return;
 
 }
 
 void loop()
 {
-   
-  //  printBME280Data(&Serial);
-  //  delay(500);
-
   // Non-blocking update every second
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
 
-    // Send sensor data every second
+    // Send sensor data every second: temperature, humidity, pressure
     printBME280Data(&Serial);
 
+    //Send gas sensor: Methane
     printMQ9Data();
   }
 
@@ -346,5 +299,6 @@ void loop()
     }
   }
 
+  //Make sure Blynk is run on every loop
   Blynk.run();
 }
